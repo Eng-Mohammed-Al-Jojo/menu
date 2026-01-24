@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { FaUtensils, FaShoppingBag } from "react-icons/fa";
+import type { RefObject } from "react";
+import { FaUtensils, FaMotorcycle } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 
-export default function OrderTabs({
-    onConfirm,
-}: {
-    onConfirm: (msg: string) => void;
-}) {
+interface OrderTabsProps {
+    onConfirm: (msg: string, type: "in" | "out") => void;
+    firstInputRef?: RefObject<HTMLInputElement>;
+    disableSend?: boolean;
+}
+
+export default function OrderTabs({ onConfirm, firstInputRef, disableSend }: OrderTabsProps) {
     const { items, totalPrice } = useCart();
     const [tab, setTab] = useState<"in" | "out">("in");
     const [form, setForm] = useState({
@@ -23,7 +26,6 @@ export default function OrderTabs({
         const dateStr = now.toLocaleDateString("ar-EG");
         const timeStr = now.toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' });
 
-        // قائمة الأصناف بشكل مرتب
         const list = items
             .map(i => `🔹 ${i.qty} × ${i.name} → ${Number(i.price) * i.qty}₪`)
             .join("\n");
@@ -33,7 +35,6 @@ export default function OrderTabs({
                 setError("الرجاء إدخال اسم الزبون ورقم الطاولة");
                 return;
             }
-
             return `✨ *طلب داخل المطعم* ✨
 ========================
 ${list}
@@ -57,7 +58,6 @@ ${list}
             setError("الرجاء تعبئة جميع بيانات التيك أواي");
             return;
         }
-
         return `✨ *طلب تيك أواي* ✨
 ========================
 ${list}
@@ -79,7 +79,7 @@ ${list}
     const submit = () => {
         setError(null);
         const msg = buildMessage();
-        if (msg) onConfirm(msg);
+        if (msg) onConfirm(msg, tab);
     };
 
     return (
@@ -89,21 +89,19 @@ ${list}
                 <button
                     onClick={() => setTab("in")}
                     className={`flex-1 py-2 rounded-full font-bold flex items-center justify-center gap-2
-            ${tab === "in" ? "bg-[#940D11]" : "bg-[#940D11]/30"}`}
+                    ${tab === "in" ? "bg-[#940D11]" : "bg-[#940D11]/30"}`}
                 >
                     <FaUtensils /> داخل المطعم
                 </button>
-
                 <button
                     onClick={() => setTab("out")}
                     className={`flex-1 py-2 rounded-full font-bold flex items-center justify-center gap-2
-            ${tab === "out" ? "bg-[#940D11]" : "bg-[#940D11]/30"}`}
+                    ${tab === "out" ? "bg-[#940D11]" : "bg-[#940D11]/30"}`}
                 >
-                    <FaShoppingBag /> تيك أواي
+                    <FaMotorcycle className="text-2xl" /> تيك أواي
                 </button>
             </div>
 
-            {/* Error Toast */}
             {error && (
                 <div className="text-sm text-red-400 bg-red-900/20 p-2 rounded-xl text-center">
                     {error}
@@ -113,11 +111,11 @@ ${list}
             {/* Form */}
             <div className="space-y-2">
                 <input
+                    ref={firstInputRef}
                     placeholder="اسم الزبون"
                     className="w-full p-2 rounded-xl bg-black/30"
                     onChange={e => setForm({ ...form, name: e.target.value })}
                 />
-
                 {tab === "in" && (
                     <input
                         placeholder="رقم الطاولة"
@@ -125,7 +123,6 @@ ${list}
                         onChange={e => setForm({ ...form, table: e.target.value })}
                     />
                 )}
-
                 {tab === "out" && (
                     <>
                         <input
@@ -140,7 +137,6 @@ ${list}
                         />
                     </>
                 )}
-
                 <textarea
                     placeholder="ملاحظات (اختياري)"
                     className="w-full p-2 rounded-xl bg-black/30"
@@ -148,10 +144,12 @@ ${list}
                 />
             </div>
 
-            {/* Confirm */}
+            {/* Confirm Button */}
             <button
                 onClick={submit}
-                className="w-full py-3 rounded-full bg-[#940D11] font-bold hover:scale-105 transition"
+                disabled={disableSend}
+                className={`w-full py-3 rounded-full bg-[#940D11] font-bold hover:scale-105 transition
+                    ${disableSend ? "opacity-50 cursor-not-allowed" : ""}`}
             >
                 تأكيد الطلب
             </button>

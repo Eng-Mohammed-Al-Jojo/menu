@@ -36,7 +36,7 @@ export default function ItemRow({ item }: Props) {
           </div>
 
           {/* السعر ثابت على اليسار */}
-          <div className="flex flex-col items-end pl-1.5 text-md md:text-lg text-[#F7F3E8]/80 whitespace-nowrap text-right">
+          <div className="flex flex-col items-end text-md md:text-lg text-[#F7F3E8]/80 whitespace-nowrap text-right">
             {prices.map((p, i) => (
               <span key={i}>{p.trim()}₪</span>
             ))}
