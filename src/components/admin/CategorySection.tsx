@@ -11,6 +11,7 @@ interface Props {
   setNewCategoryName: React.Dispatch<React.SetStateAction<string>>;
 }
 
+
 const CategorySection: React.FC<Props> = ({
   categories,
   setPopup,
