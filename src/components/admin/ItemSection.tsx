@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { ref, push, update } from "firebase/database";
 import { db } from "../../firebase";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
-import { type PopupState } from "./types";
+import type { PopupState, Category, Item } from "./types";
 
 interface Props {
-  categories: any;
-  items: any;
+  categories: Record<string, Category>;
+  items: Record<string, Item>;
   popup: PopupState;
   setPopup: (popup: PopupState) => void;
 }
@@ -14,7 +14,7 @@ interface Props {
 const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [itemName, setItemName] = useState("");
-  const [itemIngredients, setItemIngredients] = useState(""); // ✅ المكونات
+  const [itemIngredients, setItemIngredients] = useState("");
   const [itemPrice, setItemPrice] = useState("");
   const [quickSearch, setQuickSearch] = useState("");
 
@@ -22,7 +22,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
     if (!selectedCategory || !itemName || !itemPrice) return;
     await push(ref(db, "items"), {
       name: itemName,
-      ingredients: itemIngredients, // ✅ حفظ المكونات
+      ingredients: itemIngredients,
       price: itemPrice,
       categoryId: selectedCategory,
       visible: true,
@@ -34,8 +34,6 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
     setSelectedCategory("");
   };
 
-
-
   const toggleItem = async (id: string, visible: boolean) => {
     await update(ref(db, `items/${id}`), { visible: !visible });
   };
@@ -44,7 +42,6 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
     <div className="bg-white p-6 rounded-3xl border-4" style={{ borderColor: "#940D11" }}>
       <h2 className="font-bold mb-4 text-2xl text-[#231F20]">الأصناف</h2>
 
-      {/* ADD ITEM */}
       <div className="flex gap-2 flex-wrap mb-6">
         <select
           className="w-full p-2 border rounded-xl mb-2"
@@ -53,7 +50,9 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
         >
           <option value="">اختر القسم</option>
           {Object.keys(categories).map((id) => (
-            <option key={id} value={id}>{categories[id].name}</option>
+            <option key={id} value={id}>
+              {categories[id].name}
+            </option>
           ))}
         </select>
 
@@ -63,15 +62,12 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
           value={itemName}
           onChange={(e) => setItemName(e.target.value)}
         />
-
-        {/* حقل المكونات */}
         <input
           className="w-full p-2 border rounded-xl mb-2"
           placeholder="المكونات أو الوصف (اختياري)"
           value={itemIngredients}
           onChange={(e) => setItemIngredients(e.target.value)}
         />
-
         <input
           className="w-full p-2 border rounded-xl mb-3"
           placeholder="الأسعار (افصل بين الأسعار بفاصلة)"
@@ -81,14 +77,12 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
 
         <button
           onClick={addItem}
-          className="flex-4 py-2 rounded-xl font-bold bg-[#940D11] grow text-white
-          hover:text-white/80 hover:bg-[#940D11]/80 hover:shadow-[#df3e48] hover:cursor-pointer"
+          className="flex-4 py-2 rounded-xl font-bold bg-[#940D11] grow text-white hover:bg-[#940D11]/80"
         >
           إضافة الصنف
         </button>
       </div>
 
-      {/* QUICK SEARCH */}
       <div className="bg-white p-4 rounded-3xl border-3" style={{ borderColor: "#940D11" }}>
         <input
           className="w-full p-2 border rounded-xl mb-4"
@@ -97,23 +91,21 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
           onChange={(e) => setQuickSearch(e.target.value)}
         />
 
-        {/* قائمة المنتجات */}
         {Object.keys(items)
-          .filter(id => {
+          .filter((id) => {
             const item = items[id];
-            const prices = String(item.price).split(",").map(p => p.trim());
+            const prices = item.price.split(",").map((p) => p.trim());
             const categoryName = categories[item.categoryId]?.name || "";
             const search = quickSearch.toLowerCase();
             return (
               item.name.toLowerCase().includes(search) ||
               categoryName.toLowerCase().includes(search) ||
-              prices.some(p => p.includes(search))
+              prices.some((p) => p.includes(search))
             );
           })
-          .map(id => {
+          .map((id) => {
             const item = items[id];
-            const prices = String(item.price).split(",").map(p => p.trim());
-
+            const prices = item.price.split(",").map((p) => p.trim());
             return (
               <div
                 key={id}
@@ -122,37 +114,24 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
               >
                 <div className="flex flex-col">
                   <p className="font-bold text-[#231F20]">{item.name}</p>
-                  {item.ingredients && (
-                    <p className="text-sm text-gray-600">مكونات: {item.ingredients}</p>
-                  )}
+                  {item.ingredients && <p className="text-sm text-gray-600">مكونات: {item.ingredients}</p>}
                   <p className="text-sm text-gray-500">
-                    {categories[item.categoryId]?.name} • {prices.map(p => `${p}₪`).join(" / ")}
+                    {categories[item.categoryId]?.name} • {prices.map((p) => `${p}₪`).join(" / ")}
                   </p>
-                  {item.priceTw && item.priceTw.trim() !== "" && (
-                    <p className="text-sm text-red-500">
-                      {categories[item.categoryId]?.name} TW • {String(item.priceTw).split(",").map(p => p.trim()).map(p => `${p}₪`).join(" / ")}
-                    </p>
-                  )}
                 </div>
 
                 <div className="flex gap-2 mt-3 sm:mt-0">
                   <button
                     onClick={() => toggleItem(id, item.visible)}
-                    className={`px-3 py-1 rounded-xl text-white hover:cursor-pointer ${item.visible ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
+                    className={`px-3 py-1 rounded-xl text-white ${item.visible ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
                       }`}
                   >
                     {item.visible ? "متوفر" : "غير متوفر"}
                   </button>
-                  <button
-                    onClick={() => setPopup({ type: "editItem", id })}
-                    className="bg-yellow-400 px-3 py-1 rounded-xl hover:cursor-pointer"
-                  >
+                  <button onClick={() => setPopup({ type: "editItem", id })} className="bg-yellow-400 px-3 py-1 rounded-xl">
                     <FiEdit />
                   </button>
-                  <button
-                    onClick={() => setPopup({ type: "deleteItem", id })}
-                    className="bg-red-600 text-white px-3 py-1 rounded-xl hover:cursor-pointer"
-                  >
+                  <button onClick={() => setPopup({ type: "deleteItem", id })} className="bg-red-600 text-white px-3 py-1 rounded-xl">
                     <FiTrash2 />
                   </button>
                 </div>

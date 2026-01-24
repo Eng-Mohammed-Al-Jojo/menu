@@ -423,7 +423,6 @@ export default function Admin() {
         <CategorySection
           categories={categories}
           setPopup={setPopup}
-
           newCategoryName={newCategoryName}
           setNewCategoryName={setNewCategoryName}
         />
