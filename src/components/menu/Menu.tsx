@@ -7,6 +7,7 @@ import CategorySection from "./CategorySection";
 export interface Category {
   id: string;
   name: string;
+  available?: boolean;
   createdAt?: number;
 }
 
@@ -42,7 +43,10 @@ export default function Menu() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const [toast, setToast] = useState<{ message: string; color: "green" | "red" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    color: "green" | "red";
+  } | null>(null);
 
   useEffect(() => {
     let timeoutId: number | null = null;
@@ -90,6 +94,7 @@ export default function Menu() {
           ? Object.entries(data).map(([id, v]: any) => ({
             id,
             name: v.name,
+            available: v.available !== false, // الافتراضي متوفر
             createdAt: v.createdAt || 0,
           }))
           : [];
@@ -120,11 +125,14 @@ export default function Menu() {
         const res = await fetch("/menu-data.json");
         const data = await res.json();
 
-        const cats = Object.entries(data.categories || {}).map(([id, v]: any) => ({
-          id,
-          name: v.name,
-          createdAt: v.createdAt || 0,
-        }));
+        const cats = Object.entries(data.categories || {}).map(
+          ([id, v]: any) => ({
+            id,
+            name: v.name,
+            available: v.available !== false,
+            createdAt: v.createdAt || 0,
+          })
+        );
 
         const its = Object.entries(data.items || {}).map(([id, v]: any) => ({
           id,
@@ -141,7 +149,7 @@ export default function Menu() {
           color: "red",
         });
         setTimeout(() => setToast(null), 4000);
-      } catch (e) {
+      } catch {
         setLoading(false);
       }
     };
@@ -149,6 +157,11 @@ export default function Menu() {
     if (navigator.onLine) loadOnline();
     else loadOffline();
   }, []);
+
+  /* ========= فلترة الأقسام المتوفرة فقط ========= */
+  const availableCategories = categories.filter(
+    (cat) => cat.available
+  );
 
   if (loading) {
     return (
@@ -167,44 +180,47 @@ export default function Menu() {
           <span className="text-[#940D11] animate-ping ml-1">...</span>
         </h2>
 
-        <p className="mt-4 text-[#F7F3E8]/70 text-lg md:text-xl font-[Alamiri] tracking-wide">
+        <p className="mt-4 text-[#F7F3E8]/70 text-lg md:text-xl font-[Alamiri]">
           انتظر قليلاً، سيتم عرض كل الأصناف قريباً
         </p>
       </div>
     );
   }
+
   return (
     <main className="max-w-4xl mx-auto px-4 pb-20 space-y-8 font-[Alamiri] text-[#F7F3E8] bg-[#231F20] min-h-screen">
       {toast && (
         <div
           className="fixed top-6 right-6 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white"
-          style={{ background: toast.color === "green" ? "#940D11" : "#940D11" }}
+          style={{ background: "#940D11" }}
         >
           {toast.message}
         </div>
       )}
 
-      {/* Filter */}
+      {/* ===== Filter Tabs ===== */}
       <div className="flex flex-wrap gap-3 justify-center">
         <button
           onClick={() => setActiveCategory(null)}
           className={`px-4 py-2 rounded-full font-bold transition font-[Cairo] ${activeCategory === null
-            ? "bg-[#940D11] text-white shadow-lg text-sm md:text-md"
-            : "bg-[#E0E0E0] text-[#221E1F] text-xs md:text-md"
+              ? "bg-[#940D11] text-white shadow-lg text-sm md:text-md"
+              : "bg-[#E0E0E0] text-[#221E1F] text-xs md:text-md"
             }`}
         >
           جميع الأصناف
         </button>
 
-        {categories
-          .filter((cat) => items.some((i) => i.categoryId === cat.id))
+        {availableCategories
+          .filter((cat) =>
+            items.some((i) => i.categoryId === cat.id)
+          )
           .map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={`px-4 py-2 rounded-full font-bold transition font-[Cairo] ${activeCategory === cat.id
-                ? "bg-[#940D11] text-white shadow-lg text-sm md:text-md"
-                : "bg-[#E0E0E0] text-[#221E1F] text-xs md:text-md"
+                  ? "bg-[#940D11] text-white shadow-lg text-sm md:text-md"
+                  : "bg-[#E0E0E0] text-[#221E1F] text-xs md:text-md"
                 }`}
             >
               {cat.name}
@@ -212,11 +228,23 @@ export default function Menu() {
           ))}
       </div>
 
-      {(activeCategory ? categories.filter((c) => c.id === activeCategory) : categories).map((cat) => {
-        const catItems = items.filter((i) => i.categoryId === cat.id);
+      {/* ===== عرض الأقسام والأصناف ===== */}
+      {(activeCategory
+        ? availableCategories.filter((c) => c.id === activeCategory)
+        : availableCategories
+      ).map((cat) => {
+        const catItems = items.filter(
+          (i) => i.categoryId === cat.id
+        );
         if (!catItems.length) return null;
 
-        return <CategorySection key={cat.id} category={cat} items={catItems} />;
+        return (
+          <CategorySection
+            key={cat.id}
+            category={cat}
+            items={catItems}
+          />
+        );
       })}
     </main>
   );

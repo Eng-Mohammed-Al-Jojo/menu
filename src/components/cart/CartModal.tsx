@@ -50,10 +50,16 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
     };
 
     const handleDecrease = (id: string) => {
-        if (items.length === 1 && items[0].id === id) {
+        const item = items.find((i) => i.id === id);
+        if (!item) return;
+
+        // إذا الكمية = 1 وكان هذا هو آخر صنف في السلة
+        if (item.qty === 1 && items.length === 1) {
             setConfirmEmpty(true);
             return;
         }
+
+        // إذا الكمية > 1 أو ليس آخر صنف، فقط نقص الكمية
         decrease(id);
     };
 

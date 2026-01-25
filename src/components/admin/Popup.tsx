@@ -70,8 +70,8 @@ const Popup: React.FC<Props> = ({
       />
 
       {/* محتوى Popup */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="relative bg-white p-6 rounded-3xl shadow-2xl w-72 sm:w-80">
+      <div className="fixed inset-0 z-50 flex items-center justify-center " >
+        <div className="relative bg-white p-6 rounded-3xl shadow-2xl w-72 sm:w-80 border-4" style={{ borderColor: "#940D11" }} >
           {/* ===== Logout ===== */}
           {popup.type === "logout" && (
             <>

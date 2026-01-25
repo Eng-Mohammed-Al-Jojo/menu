@@ -15,6 +15,8 @@ export interface PopupState {
 export interface Category {
   name: string;
   createdAt: number;
+  available: boolean;
+
 }
 
 export interface Item {

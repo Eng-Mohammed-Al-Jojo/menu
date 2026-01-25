@@ -289,9 +289,17 @@ export default function Admin() {
   if (!authOk) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#231F20]" dir="rtl">
+
+        {/* POPUP إعادة تعيين كلمة المرور */}
         {resetPasswordPopup && (
           <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-50">
             <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm">
+
+              {/* الشعار */}
+              <div className="flex justify-center mb-4">
+                <img src="/logo.png" alt="Logo" className="w-24 h-24 object-contain" />
+              </div>
+
               <h2 className="text-xl font-bold mb-4 text-[#940D11] text-center">
                 إعادة تعيين كلمة المرور
               </h2>
@@ -325,11 +333,18 @@ export default function Admin() {
             </div>
           </div>
         )}
+
+        {/* POPUP تسجيل الدخول */}
         {!resetPasswordPopup && (
           <div
-            className="bg-white p-6 rounded-3xl w-full max-w-xs border-4"
+            className="bg-white p-6 rounded-3xl w-full max-w-xs border-4 flex flex-col items-center"
             style={{ borderColor: "#D2000E" }}
           >
+            {/* الشعار */}
+            <div className="mb-4">
+              <img src="/logo.png" alt="Logo" className="w-24 h-24 object-contain" />
+            </div>
+
             <h1 className="text-xl font-bold mb-4 text-center text-[#940D11]">دخول الأدمن</h1>
             <input
               type="email"
