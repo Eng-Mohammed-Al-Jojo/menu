@@ -3,9 +3,10 @@ import { useCart } from "../../context/CartContext";
 
 interface Props {
   item: Item;
+  orderSystem: boolean;
 }
 
-export default function ItemRow({ item }: Props) {
+export default function ItemRow({ item, orderSystem }: Props) {
   const prices = String(item.price).split(",");
   const unavailable = item.visible === false;
 
@@ -13,61 +14,96 @@ export default function ItemRow({ item }: Props) {
   const cartItem = items.find(i => i.id === item.id);
 
   return (
-    <div className={`rounded-3xl p-0.5 transition-all duration-300 ${unavailable ? "opacity-60" : "hover:scale-105"}`}>
-      <div className="relative rounded-xl px-5 py-4 bg-[#231F20] border-2 border-[#940D11]/50 shadow-inner shadow-[#940D11]/40 transition-all duration-500 font-[Almarai] font-bold flex flex-col">
-
-        {/* Glow effect */}
+    <div
+      className={`rounded-3xl p-0.5 transition
+    ${unavailable ? "opacity-60" : "hover:scale-[1.02]"}
+  `}
+    >      <div
+      className={`relative rounded-2xl px-4 py-3
+          bg-[#040309]/90
+          border border-[#FDB143]/40
+          shadow-[inset_0_0_25px_rgba(253,177,67,0.15)]
+          font-[Almarai] font-bold
+          ${unavailable
+          ? "bg-[#040309]/80 border border-[#F5F8F7]/30"
+          : "bg-[#040309]/90 border border-[#FDB143]/40"}`}
+    >
+        {/* Glow */}
         {!unavailable && (
-          <div className="absolute inset-0 rounded-4xl bg-[#940D11]/10 animate-pulse z-0"></div>
+          <div className="absolute inset-0 rounded-2xl bg-[#FDB143]/10 animate-pulse pointer-events-none" />
         )}
 
-        {/* Name + Ingredients + Price */}
-        <div className="relative z-10 flex flex-row justify-between items-start mb-3 gap-4">
-          {/* الاسم والمكونات */}
-          <div className="flex-1 min-w-0">
-            <h3 className={`text-lg md:text-xl font-extrabold wrap-break-word ${unavailable ? "line-through decoration-[#F7F3E8]/50 decoration-2" : ""}`}>
+        {/* ===== 3 Columns Layout ===== */}
+        <div className="relative z-10 grid grid-cols-[1fr_auto_auto] items-center gap-4">
+
+          {/* ===== Right: Name + Ingredients ===== */}
+          <div className="min-w-0" >
+            <h3
+              className={`text-md md:text-lg font-extrabold leading-snug  ${unavailable
+                ? "line-through decoration-[#F5F8F7]/70 decoration-2 text-[#F5F8F7]/80"
+                : ""
+                }`}
+            >
               {item.name}
             </h3>
+
             {item.ingredients && (
-              <p className={`mt-1 text-xs md:text-sm wrap-break-word ${unavailable ? "line-through decoration-[#F7F3E8]/30 decoration-1" : ""}`}>
+              <p
+                className={`mt-1 text-xs md:text-sm text-[#F5F8F7]/80 ${unavailable
+                  ? "line-through decoration-[#F5F8F7]/70 decoration-2 text-[#F5F8F7]/80"
+                  : ""
+                  }`}
+              >
                 {item.ingredients}
               </p>
             )}
           </div>
 
-          {/* السعر ثابت على اليسار */}
-          <div className="flex flex-col items-end text-md md:text-lg text-[#F7F3E8]/80 whitespace-nowrap text-right">
+          {/* ===== Middle: Price ===== */}
+          <div className="flex flex-col items-end text-md md:text-lg font-extrabold text-[#FDB143] whitespace-nowrap">
             {prices.map((p, i) => (
               <span key={i}>{p.trim()}₪</span>
             ))}
           </div>
-        </div>
 
-        {/* Cart Controls في سطر منفصل */}
-        <div className="flex justify-end mt-1 z-10">
-          {!unavailable ? (
-            !cartItem ? (
-              <button
-                onClick={() => addItem(item)}
-                className="w-9 h-9 rounded-full bg-[#940D11] text-white font-extrabold text-lg hover:scale-110 transition shadow-lg"
-              >
-                +
-              </button>
-            ) : (
-              <div className="flex items-center gap-2 bg-[#940D11]/20 rounded-full px-2 py-1">
-                <button onClick={() => decrease(item.id)} className="w-7 h-7 rounded-full bg-[#940D11] text-white">
-                  −
-                </button>
-
-                <span className="min-w-[20px] text-center text-sm font-bold">{cartItem.qty}</span>
-
-                <button onClick={() => increase(item.id)} className="w-7 h-7 rounded-full bg-[#940D11] text-white">
+          {/* ===== Left: Add / Counter ===== */}
+          {orderSystem && !unavailable && (
+            <div className="flex flex-col items-center justify-center gap-1">
+              {!cartItem ? (
+                <button
+                  onClick={() => addItem(item)}
+                  className="
+                    w-8 h-8 rounded-full
+                    bg-[#FDB143] text-[#040309]
+                    font-extrabold text-lg
+                    hover:shadow-[0_0_20px_rgba(253,177,67,0.7)]
+                    transition
+                  "
+                >
                   +
                 </button>
-              </div>
-            )
-          ) : (
-            <span className="text-red-400 font-bold text-sm">غير متوفر حالياً</span>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => increase(item.id)}
+                    className="w-7 h-7 rounded-full bg-[#FDB143] text-[#040309] font-bold"
+                  >
+                    +
+                  </button>
+
+                  <span className="text-sm font-extrabold text-[#FDB143]">
+                    {cartItem.qty}
+                  </span>
+
+                  <button
+                    onClick={() => decrease(item.id)}
+                    className="w-7 h-7 rounded-full bg-[#FDB143] text-[#040309] font-bold"
+                  >
+                    −
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

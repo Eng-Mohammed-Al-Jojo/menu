@@ -51,9 +51,9 @@ const CategorySection: React.FC<Props> = ({
   return (
     <div
       className="bg-white p-4 rounded-3xl mb-6 border-4"
-      style={{ borderColor: "#940D11" }}
+      style={{ borderColor: "#FDB143" }}
     >
-      <h2 className="font-bold mb-3 text-xl">الأقسام</h2>
+      <h2 className="font-bold mb-3 text-2xl">الأقسام</h2>
 
       {/* إضافة قسم */}
       <div className="flex gap-2 flex-wrap mb-4">
@@ -65,7 +65,7 @@ const CategorySection: React.FC<Props> = ({
         />
         <button
           onClick={() => setPopup({ type: "addCategory" })}
-          className="px-4 rounded-xl bg-[#940D11] flex items-center text-white hover:bg-[#940D11]/80"
+          className="px-4 rounded-xl bg-[#FDB143] flex items-center text-white hover:bg-[#FDB143]/80"
         >
           <FiPlus className="text-xl" />
         </button>

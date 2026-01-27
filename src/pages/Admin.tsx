@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "../firebase";
-import { ref, onValue, push, remove, update } from "firebase/database";
-import { FiDownload, FiUpload } from "react-icons/fi";
+import { ref, onValue, push, remove, update, get, set } from "firebase/database";
+import { FiDownload, FiSettings, FiUpload } from "react-icons/fi";
 
 import {
   signInWithEmailAndPassword,
@@ -19,6 +19,8 @@ import CategorySection from "../components/admin/CategorySection";
 import ItemSection from "../components/admin/ItemSection";
 import Popup from "../components/admin/Popup";
 import { type PopupState } from "../components/admin/types";
+import OrderSettingsModal from "../components/admin/OrderSettingsModal";
+import { FaDatabase } from "react-icons/fa";
 
 export default function Admin() {
   const location = useLocation();
@@ -48,6 +50,8 @@ export default function Admin() {
   const [editItemId, setEditItemId] = useState("");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showOrderSettings, setShowOrderSettings] = useState(false);
+  const [orderSettings, setOrderSettings] = useState<any>(null);
 
   // ================= AUTH LISTENER =================
   useEffect(() => {
@@ -71,6 +75,36 @@ export default function Admin() {
     const itemRef = ref(db, "items");
     onValue(catRef, (snap) => setCategories(snap.val() || {}));
     onValue(itemRef, (snap) => setItems(snap.val() || {}));
+  }, [authOk]);
+
+  // ================= ORDER SETTINGS INITIALIZE =================
+  useEffect(() => {
+    if (!authOk) return;
+
+    const settingsRef = ref(db, "settings/orderSettings");
+
+    const initSettings = async () => {
+      const snap = await get(settingsRef);
+      if (!snap.exists()) {
+        // إذا مش موجود، نضيف إعدادات افتراضية
+        await set(settingsRef, {
+          inRestaurant: false,
+          inPhone: "",
+          takeaway: false,
+          outPhone: "",
+        });
+        setOrderSettings({
+          inRestaurant: false,
+          inPhone: "",
+          takeaway: false,
+          outPhone: "",
+        });
+      } else {
+        setOrderSettings(snap.val());
+      }
+    };
+
+    initSettings();
   }, [authOk]);
 
   // ================= LOGIN =================
@@ -284,22 +318,18 @@ export default function Admin() {
     setTimeout(() => setToast(""), 4000);
   };
 
-
   // ================= LOGIN UI =================
   if (!authOk) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#231F20]" dir="rtl">
-
         {/* POPUP إعادة تعيين كلمة المرور */}
         {resetPasswordPopup && (
-          <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-50">
-            <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm">
-
+          <div className="fixed inset-0 bg-[#231F20]/80 flex justify-center items-center z-50 ">
+            <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm border-4 border-[#FDB143]">
               {/* الشعار */}
               <div className="flex justify-center mb-4">
-                <img src="/logo.png" alt="Logo" className="w-24 h-24 object-contain" />
+                <img src="/hamada.png" alt="Logo" className="w-24 h-24 object-contain" />
               </div>
-
               <h2 className="text-xl font-bold mb-4 text-[#940D11] text-center">
                 إعادة تعيين كلمة المرور
               </h2>
@@ -316,7 +346,7 @@ export default function Admin() {
               <div className="flex justify-end gap-2">
                 <button
                   onClick={handleResetPassword}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
+                  className="bg-[#FDB143] text-white px-4 py-2 rounded-xl hover:bg-[#FDB143]/80 transition"
                 >
                   إرسال الرابط
                 </button>
@@ -338,14 +368,13 @@ export default function Admin() {
         {!resetPasswordPopup && (
           <div
             className="bg-white p-6 rounded-3xl w-full max-w-xs border-4 flex flex-col items-center"
-            style={{ borderColor: "#D2000E" }}
+            style={{ borderColor: "#FDB143" }}
           >
             {/* الشعار */}
             <div className="mb-4">
-              <img src="/logo.png" alt="Logo" className="w-24 h-24 object-contain" />
+              <img src="/hamada.png" alt="Logo" className="w-24 h-24 object-contain" />
             </div>
-
-            <h1 className="text-xl font-bold mb-4 text-center text-[#940D11]">دخول الأدمن</h1>
+            <h1 className="text-xl font-bold mb-4 text-center text-[#FDB143]">دخول الأدمن</h1>
             <input
               type="email"
               className="w-full p-3 border rounded-xl mb-3"
@@ -362,7 +391,7 @@ export default function Admin() {
             />
             <button
               onClick={login}
-              className="w-full py-3 rounded-xl font-bold bg-[#940D11] text-white hover:cursor-pointer hover:bg-[#940D11]/80"
+              className="w-full py-3 rounded-xl font-bold bg-[#FDB143] text-white hover:cursor-pointer hover:bg-[#FDB143]/80"
             >
               دخول
             </button>
@@ -378,11 +407,12 @@ export default function Admin() {
     );
   }
 
+
   // ================= ADMIN PANEL =================
   return (
     <div className="min-h-screen w-full bg-[#231F20] flex justify-center py-5 md:p-6" dir="rtl">
       {toast && (
-        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#940D11] text-white px-6 py-3 rounded-xl shadow-lg transition-all">
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#FDB143] text-white px-6 py-3 rounded-xl shadow-lg transition-all">
           {toast}
         </div>
       )}
@@ -399,8 +429,15 @@ export default function Admin() {
 
       <div className="w-full max-w-7xl px-8 sm:px-8 md:px-24">
         <div className="flex justify-between items-center mb-6 flex-wrap">
-          <h1 className="text-3xl font-bold text-[#940D11] mb-4">لوحة تحكم Menu</h1>
+          <h1 className="text-3xl font-extrabold text-[#FDB143] mb-4">لوحة تحكم Chef Hamada</h1>
           <div className="flex gap-2 flex-wrap">
+            {/* Order Settings Button */}
+            <button
+              onClick={() => setShowOrderSettings(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-600 text-white font-bold hover:bg-yellow-500 transition hover:cursor-pointer"
+            >
+              <FiSettings size={18} />
+            </button>
             {/* Excel Buttons */}
             <button
               onClick={exportToExcel}
@@ -409,7 +446,8 @@ export default function Admin() {
               <FiUpload size={18} />
             </button>
             <button
-              onClick={() => document.getElementById("excelUpload")?.click()}
+              onClick={() => document.getElementById
+                ("excelUpload")?.click()}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition hover:cursor-pointer"
             >
               <FiDownload size={18} />
@@ -421,9 +459,8 @@ export default function Admin() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#940D11] text-white font-bold hover:bg-[#d02c37] transition hover:cursor-pointer"
             >
               backup
-              <FiUpload size={18} />
+              <FaDatabase size={18} />
             </button>
-
 
             {/* Logout */}
             <button
@@ -483,6 +520,13 @@ export default function Admin() {
           logout={logout}
         />
       </div>
+
+      {/* Order Settings Modal */}
+      {showOrderSettings && orderSettings && (
+        <OrderSettingsModal
+          setShowOrderSettings={setShowOrderSettings}
+        />
+      )}
     </div>
   );
 }

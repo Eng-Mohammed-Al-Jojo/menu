@@ -67,14 +67,14 @@ export default function FeedbackModal({ show, onClose }: Props) {
                             placeholder="الاسم (اختياري)"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#940D11]"
+                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#FDB143]"
                         />
                         <input
                             type="tel"
                             placeholder="رقم الجوال (اختياري)"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#940D11] text-right placeholder:text-[#F7F3E8]/50"
+                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#FDB143] text-right placeholder:text-[#F7F3E8]/50"
                         />
 
                         {/* تقييم النجوم */}
@@ -105,12 +105,12 @@ export default function FeedbackModal({ show, onClose }: Props) {
                             placeholder="الملاحظة *"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#940D11] resize-none"
+                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#FDB143] resize-none"
                             rows={5}
                         />
                         <button
                             onClick={handleSend}
-                            className="w-full py-3 rounded-full bg-[#940D11] font-bold hover:scale-105 transition"
+                            className="w-full py-3 rounded-full bg-[#FDB143] font-bold hover:scale-105 transition"
                         >
                             إرسال
                         </button>
@@ -120,7 +120,7 @@ export default function FeedbackModal({ show, onClose }: Props) {
 
             {/* Toast */}
             {toast && (
-                <div className="fixed top-6 right-6 z-50 bg-[#940D11] text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-pulse">
+                <div className="fixed top-6 right-6 z-50 bg-[#FDB143] text-[#040309] px-6 py-3 rounded-2xl font-bold shadow-2xl animate-pulse">
                     {toast}
                 </div>
             )}

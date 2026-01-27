@@ -13,7 +13,12 @@ export default function Footer() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   return (
-    <footer className="mt-16 bg-[#74070b] text-white rounded-t-3xl font-[Almarai]">
+    <footer className="  mt-20
+        bg-linear-gradient-to-t from-[#040309] via-[#040309]/95 to-[#040309]/90 
+        text-[#F5F8F7]
+        rounded-t-3xl
+        border-t border-[#FDB143]/30
+        font-[Almarai]">
       <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-8">
 
         {/* يمين – الموقع */}
@@ -40,7 +45,11 @@ export default function Footer() {
               <a
                 key={i}
                 href="#"
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-[#940D11] hover:scale-110 transition"
+                className="  w-10 h-10 rounded-full flex items-center justify-center
+                bg-[#FDB143] text-[#040309]
+                hover:scale-110
+                hover:shadow-[0_0_25px_rgba(253,177,67,0.6)]
+                transition"
               >
                 <Icon className="text-white text-lg" />
               </a>
@@ -54,7 +63,8 @@ export default function Footer() {
             href="https://engmohammedaljojo.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-white/10 transition"
+            className="
+            group flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-white/10 transition"
           >
             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
               <FaLaptopCode className="text-white text-lg" />

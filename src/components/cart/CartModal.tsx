@@ -2,30 +2,51 @@ import { useState, useEffect, useRef } from "react";
 import { FaTimes, FaPlus, FaMinus } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import OrderTabs from "./OrderTabs";
+import { db } from "../../firebase";
+import { ref, get } from "firebase/database";
+
+interface OrderSettings {
+    inRestaurant: boolean;
+    takeaway: boolean;
+    inPhone: string;
+    outPhone: string;
+}
 
 export default function CartModal({ onClose }: { onClose: () => void }) {
     const { items, totalPrice, clearCart, increase, decrease } = useCart();
-
     const [toast, setToast] = useState<string | null>(null);
     const [orderSent, setOrderSent] = useState(false);
     const [lastMessage, setLastMessage] = useState<string>("");
     const [orderType, setOrderType] = useState<"in" | "out">("in");
     const [showModal, setShowModal] = useState(false);
     const [confirmEmpty, setConfirmEmpty] = useState(false);
+    const [orderSettings, setOrderSettings] = useState<OrderSettings | null>(null);
 
     const firstInputRef = useRef<HTMLInputElement>(null);
 
-    // Open modal only when user clicks cart, not when adding items
+    // جلب الإعدادات من Firebase
     useEffect(() => {
-        if (items.length === 0 && orderSent) return;
-        if (items.length > 0) setShowModal(true);
-    }, [items.length, orderSent]);
+        const fetchSettings = async () => {
+            try {
+                const snap = await get(ref(db, "settings/orderSettings"));
+                if (snap.exists()) {
+                    setOrderSettings(snap.val());
+                }
+            } catch (err) {
+                console.error("خطأ في جلب إعدادات الطلب:", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
-    // Auto focus on first input
+    // فتح المودال عند وجود أصناف
     useEffect(() => {
-        if (showModal && firstInputRef.current) {
-            firstInputRef.current.focus();
-        }
+        if (items.length > 0) setShowModal(true);
+    }, [items.length]);
+
+    // Auto focus على أول input حسب التاب
+    useEffect(() => {
+        if (showModal && firstInputRef.current) firstInputRef.current.focus();
     }, [showModal]);
 
     const handleSend = (message: string, type: "in" | "out") => {
@@ -35,9 +56,13 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
             return;
         }
 
-        const phone = "972592133357";
-        const url =
-            "https://wa.me/" + phone + "?text=" + encodeURIComponent(message);
+        // رقم واتس حسب النوع
+        const phone =
+            type === "in"
+                ? orderSettings?.inPhone || "972592133357"
+                : orderSettings?.outPhone || "972592133357";
+
+        const url = "https://wa.me/" + phone + "?text=" + encodeURIComponent(message);
         window.open(url, "_blank");
 
         setLastMessage(message);
@@ -53,13 +78,10 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
         const item = items.find((i) => i.id === id);
         if (!item) return;
 
-        // إذا الكمية = 1 وكان هذا هو آخر صنف في السلة
         if (item.qty === 1 && items.length === 1) {
             setConfirmEmpty(true);
             return;
         }
-
-        // إذا الكمية > 1 أو ليس آخر صنف، فقط نقص الكمية
         decrease(id);
     };
 
@@ -77,30 +99,21 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
 
     return (
         <>
-            {/* Modal */}
             {showModal && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity duration-300"
-                    style={{ opacity: showModal ? 1 : 0 }}
-                >
-                    <div className="bg-[#231F20] w-full max-w-md rounded-3xl p-6 text-[#F7F3E8] relative max-h-[90vh] overflow-y-auto mx-4 transform transition-transform duration-300 scale-100">
-                        {/* Close */}
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 left-4 text-xl"
-                        >
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                    <div className="bg-[#231F20] w-full max-w-md rounded-3xl p-6 text-[#F7F3E8] relative max-h-[90vh] overflow-y-auto mx-4">
+                        <button onClick={onClose} className="absolute top-4 left-4 text-xl">
                             <FaTimes />
                         </button>
 
                         {!orderSent ? (
                             <>
-                                <h2 className="text-2xl font-extrabold text-center mb-4">
+                                <h2 className="text-2xl font-extrabold text-center mb-4 text-[#FDB143]">
                                     سلة الطلب 🛒
                                 </h2>
 
-                                {/* Confirm delete last item */}
                                 {confirmEmpty && (
-                                    <div className="bg-red-900/30 p-4 rounded-xl text-center mb-4">
+                                    <div className="bg-yellow-900/30 p-4 rounded-xl text-center mb-4">
                                         <p className="mb-2">هل تريد حذف آخر صنف من السلة؟</p>
                                         <div className="flex justify-center gap-4">
                                             <button
@@ -119,7 +132,6 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                                     </div>
                                 )}
 
-                                {/* Items */}
                                 {items.length === 0 && !confirmEmpty && (
                                     <div className="text-center py-10 space-y-4">
                                         <p className="text-lg font-bold">السلة فارغة</p>
@@ -149,7 +161,7 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                                                     <div className="flex items-center gap-2">
                                                         <button
                                                             onClick={() => handleDecrease(item.id)}
-                                                            className="w-7 h-7 rounded-full bg-[#940D11] flex items-center justify-center"
+                                                            className="w-7 h-7 rounded-full bg-[#FDB143] flex items-center justify-center"
                                                         >
                                                             <FaMinus size={10} />
                                                         </button>
@@ -158,7 +170,7 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                                                         </span>
                                                         <button
                                                             onClick={() => increase(item.id)}
-                                                            className="w-7 h-7 rounded-full bg-[#940D11] flex items-center justify-center"
+                                                            className="w-7 h-7 rounded-full bg-[#FDB143] flex items-center justify-center"
                                                         >
                                                             <FaPlus size={10} />
                                                         </button>
@@ -167,17 +179,16 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                                             ))}
                                         </div>
 
-                                        {/* Total */}
                                         <div className="text-lg font-bold flex justify-between mb-4">
                                             <span>الإجمالي</span>
                                             <span>{totalPrice}₪</span>
                                         </div>
 
-                                        {/* Order Form */}
+                                        {/* OrderTabs مع تمرير الإعدادات */}
                                         <OrderTabs
-                                            onConfirm={(msg, type) =>
-                                                items.length === 0 ? null : handleSend(msg, type)
-                                            }
+                                            onConfirm={handleSend}
+                                            firstInputRef={firstInputRef}
+                                            orderSettings={orderSettings ?? undefined}
                                         />
                                     </>
                                 )}
@@ -201,7 +212,7 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="w-full py-3 rounded-full bg-[#940D11] font-bold hover:scale-105 transition"
+                                    className="w-full py-3 rounded-full bg-[#FDB143] font-bold hover:scale-105 transition"
                                 >
                                     أغلق
                                 </button>
@@ -211,9 +222,8 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                 </div>
             )}
 
-            {/* Toast */}
             {toast && (
-                <div className="fixed top-6 right-6 z-50 bg-[#940D11] text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-pulse">
+                <div className="fixed top-6 right-6 z-50 bg-[#FDB143] text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-pulse">
                     {toast}
                 </div>
             )}

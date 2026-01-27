@@ -4,27 +4,34 @@ import type { Category, Item } from "./Menu";
 interface Props {
   category: Category;
   items: Item[];
+  orderSystem: boolean; // <-- لازم يجي من Menu
 }
 
-export default function CategorySection({ category, items }: Props) {
+export default function CategorySection({ category, items, orderSystem }: Props) {
   return (
-    <section className="mb-20 px-4 md:px-0">
-      {/* عنوان القسم مع الخطوط */}
-      <div className="mb-12 flex items-center justify-center flex-wrap gap-2 w-full">
-        <span className="flex-1 h-1 bg-linear-to-r from-[#F7F3E8]/50 via-[#940D11]/40 to-[#F7F3E8]/50 rounded-full shadow-inner"></span>
+    <section className="mb-24 px-4 md:px-0">
+      <div className="mb-14 flex items-center justify-center gap-4 w-full">
+        <span className="flex-1 h-px bg-linear-to-r from-transparent via-[#FDB143]/70 to-transparent"></span>
 
-        <h2 className="font-[Almarai] font-extrabold text-[#940D11] drop-shadow-[0_3px_10px_rgba(0,0,0,0.4)] 
-        tracking-wide uppercase text-center text-4xl md:text-6xl sm:text-5xl px-2">
+        <h2 className="
+      font-[Almarai] font-extrabold
+      text-[#FDB143]
+      drop-shadow-[0_4px_20px_rgba(253,177,67,0.45)]
+      tracking-wide
+      text-center text-3xl md:text-4xl
+    ">
           {category.name}
         </h2>
 
-        <span className="flex-1 h-1 bg-linear-to-r from-[#F7F3E8]/50 via-[#940D11]/40 to-[#F7F3E8]/50 rounded-full shadow-inner"></span>
+        <span className="flex-1 h-px bg-linear-to-r from-transparent via-[#FDB143]/70 to-transparent"></span>
       </div>
 
-      {/* كل صنف بسطر */}
-      <div className="flex flex-col gap-2">
-        {items.map(item => <ItemRow key={item.id} item={item} />)}
+      <div className="flex flex-col gap-3">
+        {items.map(item => (
+          <ItemRow key={item.id} item={item} orderSystem={orderSystem} />
+        ))}
       </div>
     </section>
+
   );
 }

@@ -20,6 +20,8 @@ export interface Category {
 }
 
 export interface Item {
+  id(id: any, visible: boolean): void;
+  image: any;
   name: string;
   price: string;
   priceTw?: string;

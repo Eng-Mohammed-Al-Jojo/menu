@@ -17,7 +17,7 @@ export default function CartButton() {
                 className="
           fixed bottom-6 right-6 z-40
           flex items-center gap-2
-          bg-[#940D11] text-white
+          bg-[#FDB143] text-[#040309]
           px-4 py-3 rounded-full
           shadow-2xl
           hover:scale-105 transition

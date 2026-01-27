@@ -23,10 +23,10 @@ export interface Item {
 }
 
 /* ================= LocalStorage ================= */
-const saveToLocal = (cats: Category[], its: Item[]) => {
+const saveToLocal = (cats: Category[], its: Item[], orderSystem: boolean) => {
   localStorage.setItem(
     "menu_cache",
-    JSON.stringify({ categories: cats, items: its, savedAt: Date.now() })
+    JSON.stringify({ categories: cats, items: its, orderSystem, savedAt: Date.now() })
   );
 };
 
@@ -48,6 +48,8 @@ export default function Menu() {
     color: "green" | "red";
   } | null>(null);
 
+  const [orderSystem, setOrderSystem] = useState<boolean>(true); // <-- من الداتابيز
+
   useEffect(() => {
     let timeoutId: number | null = null;
     let firebaseLoaded = false;
@@ -57,6 +59,7 @@ export default function Menu() {
       let its: Item[] = [];
       let catsLoaded = false;
       let itemsLoaded = false;
+      let orderSystemLoaded = false;
 
       timeoutId = setTimeout(() => {
         if (!firebaseLoaded) {
@@ -64,6 +67,7 @@ export default function Menu() {
           if (cached) {
             setCategories(cached.categories || []);
             setItems(cached.items || []);
+            setOrderSystem(cached.orderSystem ?? true);
             setLoading(false);
 
             setToast({
@@ -77,7 +81,7 @@ export default function Menu() {
 
       const finishFirebase = () => {
         firebaseLoaded = true;
-        saveToLocal(cats, its);
+        saveToLocal(cats, its, orderSystem);
         setLoading(false);
         if (timeoutId) clearTimeout(timeoutId);
 
@@ -101,7 +105,7 @@ export default function Menu() {
 
         setCategories(cats);
         catsLoaded = true;
-        if (itemsLoaded) finishFirebase();
+        if (itemsLoaded && orderSystemLoaded) finishFirebase();
       });
 
       onValue(ref(db, "items"), (snap) => {
@@ -116,7 +120,15 @@ export default function Menu() {
 
         setItems(its);
         itemsLoaded = true;
-        if (catsLoaded) finishFirebase();
+        if (catsLoaded && orderSystemLoaded) finishFirebase();
+      });
+
+      // جلب toggle orderSystem
+      onValue(ref(db, "settings/orderSystem"), (snap) => {
+        const val = snap.val();
+        setOrderSystem(val ?? true); // الافتراضي true
+        orderSystemLoaded = true;
+        if (catsLoaded && itemsLoaded) finishFirebase();
       });
     };
 
@@ -125,14 +137,12 @@ export default function Menu() {
         const res = await fetch("/menu-data.json");
         const data = await res.json();
 
-        const cats = Object.entries(data.categories || {}).map(
-          ([id, v]: any) => ({
-            id,
-            name: v.name,
-            available: v.available !== false,
-            createdAt: v.createdAt || 0,
-          })
-        );
+        const cats = Object.entries(data.categories || {}).map(([id, v]: any) => ({
+          id,
+          name: v.name,
+          available: v.available !== false,
+          createdAt: v.createdAt || 0,
+        }));
 
         const its = Object.entries(data.items || {}).map(([id, v]: any) => ({
           id,
@@ -142,6 +152,7 @@ export default function Menu() {
 
         setCategories(cats);
         setItems(its);
+        setOrderSystem(data.orderSystem ?? true);
         setLoading(false);
 
         setToast({
@@ -159,25 +170,23 @@ export default function Menu() {
   }, []);
 
   /* ========= فلترة الأقسام المتوفرة فقط ========= */
-  const availableCategories = categories.filter(
-    (cat) => cat.available
-  );
+  const availableCategories = categories.filter((cat) => cat.available);
 
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#231F20] font-[Almarai] font-bold">
         <div className="relative w-56 h-56 mb-6">
           <img
-            src="/logo.png"
+            src="/hamada.png"
             alt="Logo"
             className="w-full h-full object-contain rounded-full shadow-2xl animate-pulseScale"
           />
-          <div className="absolute inset-0 rounded-full border-4 border-[#940D11]/50 animate-ping"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-[#FDB143]/50 animate-ping"></div>
         </div>
 
         <h2 className="text-3xl md:text-5xl font-extrabold text-[#F7F3E8]">
           يتم تحضير القائمة
-          <span className="text-[#940D11] animate-ping ml-1">...</span>
+          <span className="text-[#FDB143] animate-ping ml-1">...</span>
         </h2>
 
         <p className="mt-4 text-[#F7F3E8]/70 text-lg md:text-xl font-[Alamiri]">
@@ -188,7 +197,7 @@ export default function Menu() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 pb-20 space-y-8 font-[Alamiri] text-[#F7F3E8] bg-[#231F20] min-h-screen">
+    <main className="max-w-4xl mx-auto px-4 pb-24 space-y-10 font-[Alamiri] text-[#F5F8F7]">
       {toast && (
         <div
           className="fixed top-6 right-6 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white"
@@ -202,26 +211,28 @@ export default function Menu() {
       <div className="flex flex-wrap gap-3 justify-center">
         <button
           onClick={() => setActiveCategory(null)}
-          className={`px-4 py-2 rounded-full font-bold transition font-[Cairo] ${activeCategory === null
-              ? "bg-[#940D11] text-white shadow-lg text-sm md:text-md"
-              : "bg-[#E0E0E0] text-[#221E1F] text-xs md:text-md"
+          className={`px-4 py-2 rounded-full font-bold transition font-[Cairo]
+        ${activeCategory === null
+              ? "bg-[#FDB143] text-[#040309] shadow-[0_8px_30px_rgba(253,177,67,0.4)] text-lg"
+              : "bg-[#F5F8F7] text-[#040309]/80 hover:bg-[#FDB143]/80 text-xs"
             }`}
+
         >
           جميع الأصناف
         </button>
 
         {availableCategories
-          .filter((cat) =>
-            items.some((i) => i.categoryId === cat.id)
-          )
+          .filter((cat) => items.some((i) => i.categoryId === cat.id))
           .map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-full font-bold transition font-[Cairo] ${activeCategory === cat.id
-                  ? "bg-[#940D11] text-white shadow-lg text-sm md:text-md"
-                  : "bg-[#E0E0E0] text-[#221E1F] text-xs md:text-md"
+              className={`px-4 py-2 rounded-full font-bold transition font-[Cairo]
+            ${activeCategory === cat.id
+                  ? "bg-[#FDB143] text-[#040309] shadow-[0_8px_30px_rgba(253,177,67,0.4)] text-sm"
+                  : "bg-[#F5F8F7] text-[#040309]/80 hover:bg-[#FDB143]/80 text-xs"
                 }`}
+
             >
               {cat.name}
             </button>
@@ -233,9 +244,7 @@ export default function Menu() {
         ? availableCategories.filter((c) => c.id === activeCategory)
         : availableCategories
       ).map((cat) => {
-        const catItems = items.filter(
-          (i) => i.categoryId === cat.id
-        );
+        const catItems = items.filter((i) => i.categoryId === cat.id);
         if (!catItems.length) return null;
 
         return (
@@ -243,6 +252,7 @@ export default function Menu() {
             key={cat.id}
             category={cat}
             items={catItems}
+            orderSystem={orderSystem} // <-- مرر orderSystem
           />
         );
       })}
