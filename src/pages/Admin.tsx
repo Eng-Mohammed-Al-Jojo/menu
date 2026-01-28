@@ -234,7 +234,7 @@ export default function Admin() {
     const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-    saveAs(blob, "mazzat-menu.xlsx");
+    saveAs(blob, "hamada-menu.xlsx");
   };
 
   // ================= IMPORT EXCEL =================
@@ -311,7 +311,7 @@ export default function Admin() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "mazzat-data.json";
+    a.download = "data.json";
     a.click();
     URL.revokeObjectURL(url);
     setToast("📦 تم تصدير ملف JSON بنجاح");

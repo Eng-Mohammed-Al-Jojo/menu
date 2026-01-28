@@ -134,7 +134,7 @@ export default function Menu() {
 
     const loadOffline = async () => {
       try {
-        const res = await fetch("/menu-data.json");
+        const res = await fetch("/data.json");
         const data = await res.json();
 
         const cats = Object.entries(data.categories || {}).map(([id, v]: any) => ({

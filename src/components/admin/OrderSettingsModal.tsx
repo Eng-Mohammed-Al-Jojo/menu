@@ -181,7 +181,7 @@ export default function OrderSettingsModal({
 
                     {/* Complaints */}
                     <div className="bg-linear-to-br from-red-600/30 to-black/40 rounded-2xl px-4 py-3 space-y-2">
-                        <p className="font-bold text-sm">🚨 واتساب الشكاوى</p>
+                        <p className="font-bold text-sm">🚨 واتساب الشكاوى والاراء</p>
                         <input
                             value={complaintsWhatsapp}
                             onChange={(e) =>

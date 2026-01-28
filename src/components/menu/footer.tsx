@@ -68,9 +68,11 @@ export default function Footer() {
 
         {/* يمين – الموقع */}
         <div className="flex flex-col md:items-end items-center space-y-3 w-full md:w-auto">
-          <div className="flex items-end gap-2 text-lg font-[Cairo]">
-            <FaMapMarkerAlt />
-            {footer.address || "غزة شارع الثورة مقابل تاج مول"}
+          <div className="flex flex-col items-center text-lg font-[Cairo] gap-1">
+            <FaMapMarkerAlt className="text-xl" />
+            <span className="text-center">
+              {footer.address || "غزة شارع الثورة مقابل تاج مول"}
+            </span>
           </div>
 
           <div className="flex flex-col gap-1 items-start md:items-end">
