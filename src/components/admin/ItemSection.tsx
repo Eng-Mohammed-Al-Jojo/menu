@@ -129,7 +129,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                   {catItems.map((item) => (
                     <div
                       key={item.id}
-                      className="flex justify-between items-center px-4 py-2 bg-white"
+                      className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 py-2 bg-white gap-2"
                     >
                       {/* جزء النصوص */}
                       <div className="flex-1 min-w-0">
@@ -141,7 +141,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                       </div>
 
                       {/* أزرار ثابتة */}
-                      <div className="flex gap-2 ml-3 shrink-0">
+                      <div className="flex gap-2 ml-0 sm:ml-3 shrink-0">
                         <button
                           onClick={() => toggleItem(item.id, item.visible)}
                           className={`w-16 h-8 text-sm rounded-lg text-white ${item.visible ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
@@ -171,6 +171,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
               )}
             </div>
           );
+
         })}
       </div>
     </div>

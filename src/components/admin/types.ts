@@ -13,6 +13,8 @@ export interface PopupState {
 }
 
 export interface Category {
+  id: any;
+  order: number;
   name: string;
   createdAt: number;
   available: boolean;

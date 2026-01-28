@@ -8,6 +8,7 @@ export interface Category {
   id: string;
   name: string;
   available?: boolean;
+  order?: number;
   createdAt?: number;
 }
 
@@ -26,7 +27,12 @@ export interface Item {
 const saveToLocal = (cats: Category[], its: Item[], orderSystem: boolean) => {
   localStorage.setItem(
     "menu_cache",
-    JSON.stringify({ categories: cats, items: its, orderSystem, savedAt: Date.now() })
+    JSON.stringify({
+      categories: cats,
+      items: its,
+      orderSystem,
+      savedAt: Date.now(),
+    })
   );
 };
 
@@ -48,7 +54,7 @@ export default function Menu() {
     color: "green" | "red";
   } | null>(null);
 
-  const [orderSystem, setOrderSystem] = useState<boolean>(true); // <-- من الداتابيز
+  const [orderSystem, setOrderSystem] = useState<boolean>(true);
 
   useEffect(() => {
     let timeoutId: number | null = null;
@@ -61,7 +67,7 @@ export default function Menu() {
       let itemsLoaded = false;
       let orderSystemLoaded = false;
 
-      timeoutId = setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         if (!firebaseLoaded) {
           const cached = loadFromLocal();
           if (cached) {
@@ -92,24 +98,32 @@ export default function Menu() {
         setTimeout(() => setToast(null), 3000);
       };
 
+      /* ===== Categories ===== */
       onValue(ref(db, "categories"), (snap) => {
         const data = snap.val();
+
         cats = data
           ? Object.entries(data).map(([id, v]: any) => ({
             id,
             name: v.name,
-            available: v.available !== false, // الافتراضي متوفر
+            available: v.available !== false,
+            order: v.order ?? 0,
             createdAt: v.createdAt || 0,
           }))
           : [];
+
+        // ⭐ ترتيب الأقسام حسب order
+        cats.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
         setCategories(cats);
         catsLoaded = true;
         if (itemsLoaded && orderSystemLoaded) finishFirebase();
       });
 
+      /* ===== Items ===== */
       onValue(ref(db, "items"), (snap) => {
         const data = snap.val();
+
         its = data
           ? Object.entries(data).map(([id, v]: any) => ({
             id,
@@ -123,10 +137,10 @@ export default function Menu() {
         if (catsLoaded && orderSystemLoaded) finishFirebase();
       });
 
-      // جلب toggle orderSystem
+      /* ===== Order System Toggle ===== */
       onValue(ref(db, "settings/orderSystem"), (snap) => {
         const val = snap.val();
-        setOrderSystem(val ?? true); // الافتراضي true
+        setOrderSystem(val ?? true);
         orderSystemLoaded = true;
         if (catsLoaded && itemsLoaded) finishFirebase();
       });
@@ -137,18 +151,25 @@ export default function Menu() {
         const res = await fetch("/data.json");
         const data = await res.json();
 
-        const cats = Object.entries(data.categories || {}).map(([id, v]: any) => ({
+        const cats: Category[] = Object.entries(
+          data.categories || {}
+        ).map(([id, v]: any) => ({
           id,
           name: v.name,
           available: v.available !== false,
+          order: v.order ?? 0,
           createdAt: v.createdAt || 0,
         }));
 
-        const its = Object.entries(data.items || {}).map(([id, v]: any) => ({
-          id,
-          ...v,
-          createdAt: v.createdAt || 0,
-        }));
+        cats.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+        const its: Item[] = Object.entries(data.items || {}).map(
+          ([id, v]: any) => ({
+            id,
+            ...v,
+            createdAt: v.createdAt || 0,
+          })
+        );
 
         setCategories(cats);
         setItems(its);
@@ -199,10 +220,7 @@ export default function Menu() {
   return (
     <main className="max-w-4xl mx-auto px-4 pb-24 space-y-10 font-[Alamiri] text-[#F5F8F7]">
       {toast && (
-        <div
-          className="fixed top-6 right-6 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white"
-          style={{ background: "#940D11" }}
-        >
+        <div className="fixed top-6 right-6 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white bg-[#940D11]">
           {toast.message}
         </div>
       )}
@@ -212,11 +230,10 @@ export default function Menu() {
         <button
           onClick={() => setActiveCategory(null)}
           className={`px-4 py-2 rounded-full font-bold transition font-[Cairo]
-        ${activeCategory === null
-              ? "bg-[#FDB143] text-[#040309] shadow-[0_8px_30px_rgba(253,177,67,0.4)] text-lg"
-              : "bg-[#F5F8F7] text-[#040309]/80 hover:bg-[#FDB143]/80 text-xs"
+            ${activeCategory === null
+              ? "bg-[#FDB143] text-[#040309] text-lg"
+              : "bg-[#F5F8F7] text-[#040309]/80 text-xs"
             }`}
-
         >
           جميع الأصناف
         </button>
@@ -228,11 +245,10 @@ export default function Menu() {
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={`px-4 py-2 rounded-full font-bold transition font-[Cairo]
-            ${activeCategory === cat.id
-                  ? "bg-[#FDB143] text-[#040309] shadow-[0_8px_30px_rgba(253,177,67,0.4)] text-sm"
-                  : "bg-[#F5F8F7] text-[#040309]/80 hover:bg-[#FDB143]/80 text-xs"
+                ${activeCategory === cat.id
+                  ? "bg-[#FDB143] text-[#040309] text-sm"
+                  : "bg-[#F5F8F7] text-[#040309]/80 text-xs"
                 }`}
-
             >
               {cat.name}
             </button>
@@ -244,7 +260,9 @@ export default function Menu() {
         ? availableCategories.filter((c) => c.id === activeCategory)
         : availableCategories
       ).map((cat) => {
-        const catItems = items.filter((i) => i.categoryId === cat.id);
+        const catItems = items.filter(
+          (i) => i.categoryId === cat.id
+        );
         if (!catItems.length) return null;
 
         return (
@@ -252,7 +270,7 @@ export default function Menu() {
             key={cat.id}
             category={cat}
             items={catItems}
-            orderSystem={orderSystem} // <-- مرر orderSystem
+            orderSystem={orderSystem}
           />
         );
       })}
