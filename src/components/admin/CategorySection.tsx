@@ -7,6 +7,7 @@ import {
   DndContext,
   closestCenter,
   MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -30,7 +31,7 @@ interface Props {
 }
 
 /* =======================
-   عنصر القسم القابل للسحب
+   العنصر القابل للسحب
 ======================= */
 const SortableCategory: React.FC<{
   cat: Category & { id: string };
@@ -57,6 +58,7 @@ const SortableCategory: React.FC<{
     const style: React.CSSProperties = {
       transform: CSS.Transform.toString(transform),
       transition,
+      touchAction: "none",
     };
 
     return (
@@ -64,18 +66,17 @@ const SortableCategory: React.FC<{
         ref={setNodeRef}
         style={style}
         {...attributes}
-        className="bg-gray-100 px-3 py-2 rounded-xl flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        className="bg-gray-100 px-3 py-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
-        {/* handle السحب فقط */}
-        <div
-          {...listeners}
-          className="flex items-center gap-2 cursor-grab select-none"
-        >
-          <FiMove size={18} className="text-gray-500" />
-        </div>
-
-        {/* الاسم */}
+        {/* جهة اليسار: أيقونة السحب + الاسم */}
         <div className="flex items-center gap-2 flex-1">
+          <div
+            {...listeners}
+            className="cursor-grab select-none p-1 rounded-md bg-gray-200"
+          >
+            <FiMove size={18} className="text-gray-600" />
+          </div>
+
           {editingId === cat.id ? (
             <>
               <input
@@ -85,7 +86,7 @@ const SortableCategory: React.FC<{
               />
               <button
                 onClick={() => saveEdit(cat.id)}
-                className="text-green-600 hover:text-green-800"
+                className="text-green-600 hover:text-green-800 ml-2"
               >
                 <FiCheck />
               </button>
@@ -95,49 +96,31 @@ const SortableCategory: React.FC<{
           )}
         </div>
 
-        {/* الجهة اليمنى */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => startEditing(cat.id, cat.name)}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              <FiEdit />
-            </button>
-            <button
-              onClick={() =>
-                setPopup({ type: "deleteCategory", id: cat.id })
-              }
-              className="text-red-600 hover:text-red-800"
-            >
-              <FiTrash2 />
-            </button>
-          </div>
+        {/* جهة اليمين: تعديل، حذف، سويتش */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={() => startEditing(cat.id, cat.name)}
+            className="text-blue-600 hover:text-blue-800 p-1 rounded-md"
+          >
+            <FiEdit />
+          </button>
+          <button
+            onClick={() => setPopup({ type: "deleteCategory", id: cat.id })}
+            className="text-red-600 hover:text-red-800 p-1 rounded-md"
+          >
+            <FiTrash2 />
+          </button>
 
-          {/* السويتش */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                toggleAvailability(cat.id, cat.available ?? true)
-              }
-              className={`relative w-10 h-5 rounded-full transition-all ${cat.available ? "bg-green-500" : "bg-gray-400"
-                }`}
-            >
-              <span
-                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${cat.available
-                  ? "translate-x-5 scale-105"
-                  : "translate-x-0.5"
-                  }`}
-              />
-            </button>
-
+          <button
+            onClick={() => toggleAvailability(cat.id, cat.available ?? true)}
+            className={`relative w-10 h-5 rounded-full transition-all ${cat.available ? "bg-green-500" : "bg-gray-400"
+              }`}
+          >
             <span
-              className={`text-[11px] font-bold ${cat.available ? "text-green-700" : "text-gray-600"
+              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${cat.available ? "translate-x-5 scale-105" : "translate-x-0.5"
                 }`}
-            >
-              {cat.available ? "متوفر" : "غير متوفر"}
-            </span>
-          </div>
+            />
+          </button>
         </div>
       </div>
     );
@@ -175,47 +158,36 @@ const CategorySection: React.FC<Props> = ({
     });
   };
 
-  /* 🔴 أهم جزء */
+  /* تحويل object إلى array وترتيب حسب order */
   const categoriesArray = Object.entries(categories)
-    .map(([id, cat]) => ({
-      ...cat,
-      id, // Firebase key
-    }))
+    .map(([id, cat]) => ({ ...cat, id }))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
+  /* الحساسات للكمبيوتر + الجوال */
   const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 
+  /* عند نهاية السحب */
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = categoriesArray.findIndex(
-      (c) => c.id === active.id
-    );
-    const newIndex = categoriesArray.findIndex(
-      (c) => c.id === over.id
-    );
+    const oldIndex = categoriesArray.findIndex((c) => c.id === active.id);
+    const newIndex = categoriesArray.findIndex((c) => c.id === over.id);
 
-    const newArray = arrayMove(
-      categoriesArray,
-      oldIndex,
-      newIndex
-    );
+    const newArray = arrayMove(categoriesArray, oldIndex, newIndex);
 
-    const updates: any = {};
+    // تحديث order في Firebase دفعة واحدة
+    const updates: Record<string, any> = {};
     newArray.forEach((cat, index) => {
       updates[`categories/${cat.id}/order`] = index;
     });
 
     await update(ref(db), updates);
   };
-  console.log(categoriesArray.map((c) => c.id));
+
   return (
     <DndContext
       sensors={sensors}
@@ -238,9 +210,7 @@ const CategorySection: React.FC<Props> = ({
               className="flex-1 p-2 border rounded-xl min-w-[160px]"
               placeholder="اسم القسم"
               value={newCategoryName}
-              onChange={(e) =>
-                setNewCategoryName(e.target.value)
-              }
+              onChange={(e) => setNewCategoryName(e.target.value)}
             />
             <button
               onClick={() => setPopup({ type: "addCategory" })}
