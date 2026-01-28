@@ -3,7 +3,7 @@ import { FaTimes, FaPlus, FaMinus } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import OrderTabs from "./OrderTabs";
 import { db } from "../../firebase";
-import { ref, get } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 
 interface OrderSettings {
     inRestaurant: boolean;
@@ -12,6 +12,8 @@ interface OrderSettings {
     outPhone: string;
 }
 
+const LOCAL_STORAGE_KEY = "orderSettings";
+
 export default function CartModal({ onClose }: { onClose: () => void }) {
     const { items, totalPrice, clearCart, increase, decrease } = useCart();
     const [toast, setToast] = useState<string | null>(null);
@@ -19,32 +21,37 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
     const [lastMessage, setLastMessage] = useState<string>("");
     const [orderType, setOrderType] = useState<"in" | "out">("in");
     const [showModal, setShowModal] = useState(false);
-    const [confirmEmpty, setConfirmEmpty] = useState(false);
-    const [orderSettings, setOrderSettings] = useState<OrderSettings | null>(null);
+    const [orderSettings, setOrderSettings] = useState<OrderSettings | null>(
+        null
+    );
 
     const firstInputRef = useRef<HTMLInputElement>(null);
 
-    // جلب الإعدادات من Firebase
+    // ===== جلب الإعدادات من localStorage أو Firebase =====
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const snap = await get(ref(db, "settings/orderSettings"));
-                if (snap.exists()) {
-                    setOrderSettings(snap.val());
-                }
-            } catch (err) {
-                console.error("خطأ في جلب إعدادات الطلب:", err);
+        const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localData) {
+            setOrderSettings(JSON.parse(localData));
+        }
+
+        const settingsRef = ref(db, "settings/orderSettings");
+        const unsubscribe = onValue(settingsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const settings = snapshot.val();
+                setOrderSettings(settings);
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
             }
-        };
-        fetchSettings();
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    // فتح المودال عند وجود أصناف
+    // فتح المودال إذا هناك أصناف
     useEffect(() => {
         if (items.length > 0) setShowModal(true);
     }, [items.length]);
 
-    // Auto focus على أول input حسب التاب
+    // التركيز على أول input
     useEffect(() => {
         if (showModal && firstInputRef.current) firstInputRef.current.focus();
     }, [showModal]);
@@ -56,7 +63,6 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
             return;
         }
 
-        // رقم واتس حسب النوع
         const phone =
             type === "in"
                 ? orderSettings?.inPhone || "972592133357"
@@ -75,19 +81,7 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
     };
 
     const handleDecrease = (id: string) => {
-        const item = items.find((i) => i.id === id);
-        if (!item) return;
-
-        if (item.qty === 1 && items.length === 1) {
-            setConfirmEmpty(true);
-            return;
-        }
         decrease(id);
-    };
-
-    const confirmDecreaseLast = () => {
-        decrease(items[0].id);
-        setConfirmEmpty(false);
     };
 
     const renderMessage = (msg: string) =>
@@ -112,27 +106,7 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                                     سلة الطلب 🛒
                                 </h2>
 
-                                {confirmEmpty && (
-                                    <div className="bg-yellow-900/30 p-4 rounded-xl text-center mb-4">
-                                        <p className="mb-2">هل تريد حذف آخر صنف من السلة؟</p>
-                                        <div className="flex justify-center gap-4">
-                                            <button
-                                                onClick={confirmDecreaseLast}
-                                                className="px-4 py-2 bg-[#940D11] rounded-full font-bold"
-                                            >
-                                                نعم
-                                            </button>
-                                            <button
-                                                onClick={() => setConfirmEmpty(false)}
-                                                className="px-4 py-2 bg-gray-500 rounded-full font-bold"
-                                            >
-                                                لا
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {items.length === 0 && !confirmEmpty && (
+                                {items.length === 0 ? (
                                     <div className="text-center py-10 space-y-4">
                                         <p className="text-lg font-bold">السلة فارغة</p>
                                         <button
@@ -142,9 +116,7 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                                             إغلاق
                                         </button>
                                     </div>
-                                )}
-
-                                {items.length > 0 && (
+                                ) : (
                                     <>
                                         <div className="space-y-3 max-h-60 overflow-auto mb-4">
                                             {items.map((item) => (
@@ -196,9 +168,7 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
                         ) : (
                             <div className="space-y-4 text-center">
                                 <h2 className="text-2xl font-bold text-[#FFD700]">
-                                    {orderType === "in"
-                                        ? "🍽️ طلب داخل المطعم"
-                                        : "🛍️ طلب تيك أواي"}
+                                    {orderType === "in" ? "🍽️ طلب داخل المطعم" : "🛍️ طلب تيك أواي"}
                                 </h2>
                                 <p className="text-sm text-[#F7F3E8]/70">
                                     سيتم تحضير طلبك في أسرع وقت ممكن 💨

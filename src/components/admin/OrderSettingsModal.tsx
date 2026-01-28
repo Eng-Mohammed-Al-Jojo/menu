@@ -1,28 +1,26 @@
 import { useState, useEffect } from "react";
-import { update, ref, get } from "firebase/database";
+import { ref, get, update } from "firebase/database";
 import { db } from "../../firebase";
 
-/* ================== Toast ================== */
-function Toast({
-    type,
-    message,
-}: {
-    type: "success" | "error";
-    message: string;
-}) {
+/* ================= Toast ================= */
+function Toast({ type, message }: { type: "success" | "error"; message: string }) {
     return (
         <div
-            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-999
-            px-5 py-2.5 rounded-lg shadow-xl text-white text-xs font-semibold
-            animate-slideUp
-            ${type === "success" ? "bg-green-600" : "bg-red-600"}`}
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50
+      px-6 py-3 rounded-xl shadow-2xl text-white text-sm font-semibold
+      ${type === "success" ? "bg-green-600" : "bg-red-600"}`}
         >
             {message}
         </div>
     );
 }
 
-/* ================== Service Checkbox ================== */
+/* ================= Reusable ================= */
+const sectionClass = "bg-black/40 rounded-2xl px-4 py-3 space-y-2";
+const inputClass =
+    "w-full bg-black/60 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-gray-400 focus:ring-1 focus:ring-yellow-500";
+
+/* ================= Service Checkbox ================= */
 function ServiceCheckbox({
     title,
     enabled,
@@ -30,147 +28,102 @@ function ServiceCheckbox({
     value,
     setValue,
     disabled,
-}: {
-    title: string;
-    enabled: boolean;
-    onToggle: () => void;
-    value: string;
-    setValue: (v: string) => void;
-    disabled: boolean;
-}) {
+}: any) {
     return (
-        <div className="bg-black/30 rounded-xl p-3 space-y-2 text-sm">
-            <label className="flex items-center gap-2 cursor-pointer">
+        <div className={sectionClass}>
+            <label className="flex items-center gap-3 cursor-pointer">
                 <input
                     type="checkbox"
                     checked={enabled}
                     onChange={onToggle}
                     disabled={disabled}
-                    className="accent-green-500 w-4 h-4"
+                    className="accent-green-500 w-5 h-5"
                 />
-                <span className="font-semibold">{title}</span>
+                <span className="font-semibold text-sm">{title}</span>
             </label>
 
             {enabled && (
                 <input
                     type="tel"
-                    inputMode="numeric"
                     value={value}
-                    onChange={(e) =>
-                        setValue(e.target.value.replace(/\D/g, ""))
-                    }
+                    onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
                     placeholder="رقم واتساب بدون +"
-                    className="w-full bg-black/40 rounded-lg px-3 py-1.5 text-xs outline-none
-                    placeholder:text-gray-300 focus:ring-1 focus:ring-yellow-500"
+                    className={inputClass}
                 />
-            )}
-
-            {!enabled && !disabled && (
-                <p className="text-[11px] text-gray-400">
-                    الخدمة غير مفعّلة
-                </p>
             )}
         </div>
     );
 }
 
-/* ================== Modal ================== */
-interface Props {
-    setShowOrderSettings: (show: boolean) => void;
-}
-
-export default function OrderSettingsModal({ setShowOrderSettings }: Props) {
+/* ================= Modal ================= */
+export default function OrderSettingsModal({
+    setShowOrderSettings,
+}: {
+    setShowOrderSettings: (v: boolean) => void;
+}) {
     const [orderSystem, setOrderSystem] = useState(true);
-
     const [inRestaurant, setInRestaurant] = useState(false);
     const [takeaway, setTakeaway] = useState(false);
-
     const [inPhone, setInPhone] = useState("");
     const [outPhone, setOutPhone] = useState("");
 
+    const [complaintsWhatsapp, setComplaintsWhatsapp] = useState("");
+    const [footer, setFooter] = useState({
+        address: "",
+        phone: "",
+        whatsapp: "",
+        facebook: "",
+        instagram: "",
+        tiktok: "",
+    });
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [toast, setToast] = useState<any>(null);
 
-    const [toast, setToast] = useState<{
-        type: "success" | "error";
-        message: string;
-    } | null>(null);
-
-    /* ===== Fetch Settings ===== */
+    /* ===== Fetch ===== */
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const systemSnap = await get(ref(db, "settings/orderSystem"));
-                setOrderSystem(systemSnap.exists() ? systemSnap.val() : true);
+        const fetchData = async () => {
+            const sys = await get(ref(db, "settings/orderSystem"));
+            setOrderSystem(sys.exists() ? sys.val() : true);
 
-                const snap = await get(ref(db, "settings/orderSettings"));
-                if (snap.exists()) {
-                    const data = snap.val();
-
-                    setInRestaurant(Boolean(data.inRestaurant));
-                    setTakeaway(Boolean(data.takeaway));
-
-                    setInPhone(data.inPhone || "");
-                    setOutPhone(data.outPhone || "");
-                }
-            } finally {
-                setLoading(false);
+            const order = await get(ref(db, "settings/orderSettings"));
+            if (order.exists()) {
+                const d = order.val();
+                setInRestaurant(!!d.inRestaurant);
+                setTakeaway(!!d.takeaway);
+                setInPhone(d.inPhone || "");
+                setOutPhone(d.outPhone || "");
             }
+
+            const comp = await get(ref(db, "settings/complaintsWhatsapp"));
+            if (comp.exists()) setComplaintsWhatsapp(comp.val());
+
+            const foot = await get(ref(db, "settings/footerInfo"));
+            if (foot.exists()) setFooter({ ...footer, ...foot.val() });
+
+            setLoading(false);
         };
 
-        fetchSettings();
+        fetchData();
     }, []);
 
     if (loading) return null;
 
-    /* ===== Toggle Order System ===== */
-    const toggleOrderSystem = async () => {
-        const newVal = !orderSystem;
-        await update(ref(db, "settings"), { orderSystem: newVal });
-        setOrderSystem(newVal);
-
-        setToast({
-            type: newVal ? "success" : "error",
-            message: newVal
-                ? "✅ تم تفعيل نظام الطلب"
-                : "🚫 تم إيقاف نظام الطلب",
-        });
-
-        setTimeout(() => setToast(null), 2000);
-    };
-
-    /* ===== Save with Validation ===== */
+    /* ===== Save ===== */
     const handleSave = async () => {
-        // Validation
-        if (inRestaurant && !inPhone.trim()) {
-            setToast({ type: "error", message: "❌ يجب إدخال رقم واتساب للطلب داخل المطعم" });
-            return;
-        }
-        if (takeaway && !outPhone.trim()) {
-            setToast({ type: "error", message: "❌ يجب إدخال رقم واتساب للتيك أواي" });
-            return;
-        }
-
         try {
             setSaving(true);
-
-            // Consider service stopped if number empty
-            await update(ref(db, "settings/orderSettings"), {
-                inRestaurant: inRestaurant && !!inPhone.trim(),
-                takeaway: takeaway && !!outPhone.trim(),
-                inPhone: inRestaurant ? inPhone : "",
-                outPhone: takeaway ? outPhone : "",
+            await update(ref(db, "settings"), {
+                orderSystem,
+                orderSettings: { inRestaurant, takeaway, inPhone, outPhone },
+                complaintsWhatsapp,
+                footerInfo: footer,
             });
 
-            setToast({
-                type: "success",
-                message: "💾 تم حفظ الإعدادات بنجاح",
-            });
+            setToast({ type: "success", message: "💾 تم حفظ الإعدادات بنجاح" });
         } catch {
-            setToast({
-                type: "error",
-                message: "❌ فشل الحفظ",
-            });
+            setToast({ type: "error", message: "❌ فشل الحفظ" });
         } finally {
             setSaving(false);
             setTimeout(() => setToast(null), 2000);
@@ -178,45 +131,40 @@ export default function OrderSettingsModal({ setShowOrderSettings }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/70 flex justify-center items-center">
-            <div className="bg-[#231F20] w-full max-w-sm rounded-2xl p-3 text-[#F7F3E8] relative shadow-2xl text-sm">
-                <button
-                    onClick={() => setShowOrderSettings(false)}
-                    className="absolute top-3 left-3 text-sm hover:text-red-400"
-                >
-                    ✖
-                </button>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-3">
+            <div className="bg-[#231F20] w-full max-w-md max-h-[90vh]
+        rounded-3xl text-[#F7F3E8] shadow-2xl flex flex-col">
 
-                <h2 className="text-lg font-bold text-center mb-4">
-                    إعدادات الطلب 🛠️
-                </h2>
-
-                {/* Order System Toggle */}
-                <div className="flex items-center justify-between bg-black/30 p-3 rounded-lg mb-4">
-                    <span className="font-semibold text-sm">
-                        تفعيل نظام الطلب
-                    </span>
-
-                    <button
-                        onClick={toggleOrderSystem}
-                        className={`w-12 h-6 rounded-full relative transition ${orderSystem ? "bg-green-500" : "bg-gray-600"
-                            }`}
-                    >
-                        <span
-                            className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition ${orderSystem ? "right-1" : "right-6"
-                                }`}
-                        />
+                {/* Header (ثابت) */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                    <h2 className="text-lg font-bold">⚙️ إعدادات النظام</h2>
+                    <button onClick={() => setShowOrderSettings(false)} className="hover:text-red-400">
+                        ✖
                     </button>
                 </div>
 
-                {/* Services */}
-                <div className="space-y-3">
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+
+                    {/* Order System */}
+                    <div className="bg-black/40 rounded-2xl px-4 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-sm">تفعيل نظام الطلب</span>
+                        <button
+                            onClick={() => setOrderSystem((p) => !p)}
+                            className={`w-12 h-6 rounded-full relative ${orderSystem ? "bg-green-500" : "bg-gray-600"
+                                }`}
+                        >
+                            <span
+                                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition ${orderSystem ? "right-1" : "right-6"
+                                    }`}
+                            />
+                        </button>
+                    </div>
+
                     <ServiceCheckbox
                         title="🍽️ الطلب داخل المطعم"
                         enabled={inRestaurant}
-                        onToggle={() =>
-                            setInRestaurant((prev) => !prev)
-                        }
+                        onToggle={() => setInRestaurant((p) => !p)}
                         value={inPhone}
                         setValue={setInPhone}
                         disabled={!orderSystem}
@@ -225,21 +173,84 @@ export default function OrderSettingsModal({ setShowOrderSettings }: Props) {
                     <ServiceCheckbox
                         title="🛍️ تيك أواي / دليفري"
                         enabled={takeaway}
-                        onToggle={() => setTakeaway((prev) => !prev)}
+                        onToggle={() => setTakeaway((p) => !p)}
                         value={outPhone}
                         setValue={setOutPhone}
                         disabled={!orderSystem}
                     />
+
+                    {/* Complaints */}
+                    <div className="bg-linear-to-br from-red-600/30 to-black/40 rounded-2xl px-4 py-3 space-y-2">
+                        <p className="font-bold text-sm">🚨 واتساب الشكاوى</p>
+                        <input
+                            value={complaintsWhatsapp}
+                            onChange={(e) =>
+                                setComplaintsWhatsapp(e.target.value.replace(/\D/g, ""))
+                            }
+                            placeholder="059xxxxxxx"
+                            className={inputClass}
+                        />
+                    </div>
+
+                    {/* Footer Info */}
+                    <div className={sectionClass}>
+                        <p className="font-bold text-sm">📍 معلومات الفوتر</p>
+
+                        <input
+                            placeholder="📍 العنوان"
+                            value={footer.address}
+                            onChange={(e) => setFooter({ ...footer, address: e.target.value })}
+                            className={inputClass}
+                        />
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <input
+                                placeholder="📞 الهاتف"
+                                value={footer.phone}
+                                onChange={(e) => setFooter({ ...footer, phone: e.target.value })}
+                                className={inputClass}
+                            />
+                            <input
+                                placeholder="💬 واتساب"
+                                value={footer.whatsapp}
+                                onChange={(e) => setFooter({ ...footer, whatsapp: e.target.value })}
+                                className={inputClass}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                            <input
+                                placeholder="Facebook"
+                                value={footer.facebook}
+                                onChange={(e) => setFooter({ ...footer, facebook: e.target.value })}
+                                className={inputClass}
+                            />
+                            <input
+                                placeholder="Instagram"
+                                value={footer.instagram}
+                                onChange={(e) => setFooter({ ...footer, instagram: e.target.value })}
+                                className={inputClass}
+                            />
+                            <input
+                                placeholder="TikTok"
+                                value={footer.tiktok}
+                                onChange={(e) => setFooter({ ...footer, tiktok: e.target.value })}
+                                className={inputClass}
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className={`mt-4 w-full py-2 rounded-lg bg-green-600 text-sm font-semibold ${saving ? "opacity-60" : "hover:bg-green-500"
-                        }`}
-                >
-                    {saving ? "جاري الحفظ..." : "حفظ الإعدادات"}
-                </button>
+                {/* Save (ثابت) */}
+                <div className="px-5 py-4 border-t border-white/10">
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="w-full py-4 rounded-2xl bg-linear-to-r from-green-600 to-green-500 font-bold text-sm hover:opacity-90"
+                    >
+                        {saving ? "جاري الحفظ..." : "💾 حفظ الإعدادات"}
+                    </button>
+                </div>
             </div>
 
             {toast && <Toast type={toast.type} message={toast.message} />}

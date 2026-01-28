@@ -1,22 +1,50 @@
 import { useState, useEffect } from "react";
 import { FaTimes, FaStar } from "react-icons/fa";
+import { ref, onValue } from "firebase/database";
+import { db } from "../../firebase";
 
 interface Props {
     show: boolean;
     onClose: () => void;
 }
 
+const LOCAL_STORAGE_KEY = "feedbackSettings";
+
 export default function FeedbackModal({ show, onClose }: Props) {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [message, setMessage] = useState("");
-    const [rating, setRating] = useState(0); // نجوم التقييم
-    const [hoverRating, setHoverRating] = useState(0); // تأثير hover على النجوم
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
     const [toast, setToast] = useState<string | null>(null);
+
+    const [feedbackPhone, setFeedbackPhone] = useState(""); // رقم واتساب الشكاوى والآراء
+
+    // ===== جلب البيانات من localStorage أو Firebase =====
+    useEffect(() => {
+        const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localData) {
+            const data = JSON.parse(localData);
+            if (data.feedbackPhone) setFeedbackPhone(data.feedbackPhone);
+        }
+
+        const feedbackRef = ref(db, "settings/complaintsWhatsapp");
+        const unsubscribe = onValue(feedbackRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const phone = snapshot.val();
+                setFeedbackPhone(phone);
+                localStorage.setItem(
+                    LOCAL_STORAGE_KEY,
+                    JSON.stringify({ feedbackPhone: phone })
+                );
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         if (!show) {
-            // Reset fields when modal closes
             setName("");
             setPhone("");
             setMessage("");
@@ -32,9 +60,17 @@ export default function FeedbackModal({ show, onClose }: Props) {
             return;
         }
 
-        const phoneNumber = "972592133357"; // رقم الواتساب
-        const fullMessage = `🔹 الاسم: ${name || "-"}\n🔹 الجوال: ${phone || "-"}\n🔹 التقييم: ${rating}/5\n🔹 الملاحظة: ${message}`;
-        const url = "https://wa.me/" + phoneNumber + "?text=" + encodeURIComponent(fullMessage);
+        if (!feedbackPhone) {
+            setToast("⚠️ رقم الشكاوى غير متوفر حالياً");
+            setTimeout(() => setToast(null), 3000);
+            return;
+        }
+
+        const fullMessage = `🔹 الاسم: ${name || "-"}\n🔹 الجوال: ${phone || "-"
+            }\n🔹 التقييم: ${rating}/5\n🔹 الملاحظة: ${message}`;
+
+        const url =
+            "https://wa.me/" + feedbackPhone + "?text=" + encodeURIComponent(fullMessage);
         window.open(url, "_blank");
 
         setToast("تم إرسال الملاحظة بنجاح ✅");
@@ -87,19 +123,17 @@ export default function FeedbackModal({ show, onClose }: Props) {
                                     onMouseLeave={() => setHoverRating(0)}
                                     onClick={() => setRating(star)}
                                 >
-                                    {/* خلفية النجمة (ظل خفيف) */}
                                     <FaStar className="text-[#444] w-8 h-8" />
-
-                                    {/* نجمة التقييم الفعلي */}
                                     <FaStar
                                         className={`absolute top-0 left-0 w-8 h-8 transition-transform duration-200 
-          ${star <= (hoverRating || rating) ? "text-yellow-400 scale-125 drop-shadow-lg" : "text-transparent"}
-          hover:scale-120 hover:text-yellow-300`}
+          ${star <= (hoverRating || rating)
+                                                ? "text-yellow-400 scale-125 drop-shadow-lg"
+                                                : "text-transparent"
+                                            } hover:scale-120 hover:text-yellow-300`}
                                     />
                                 </div>
                             ))}
                         </div>
-
 
                         <textarea
                             placeholder="الملاحظة *"
