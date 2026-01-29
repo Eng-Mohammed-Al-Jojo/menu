@@ -59,9 +59,9 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
     await update(ref(db, `items/${id}`), { visible: !visible });
   };
 
-  const toggleStar = async (id: string, star: boolean | undefined) => {
-    await update(ref(db, `items/${id}`), { star: !star });
-  };
+  // const toggleStar = async (id: string, star: boolean | undefined) => {
+  //   await update(ref(db, `items/${id}`), { star: !star });
+  // };
 
   const updateFeatured = async (id: string, featured: string) => {
     await update(ref(db, `items/${id}`), { featured });
@@ -243,12 +243,21 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                         </button>
 
                         <button
-                          onClick={() => toggleStar(item.id, item.star)}
+                          onClick={async () => {
+                            const newStar = !item.star; // قلب القيمة الحالية
+                            await update(ref(db, `items/${item.id}`), { star: newStar }); // حدث Firebase
+                            // تحديث الـ state المحلي مباشرة إذا عندك state items محلي
+                            // مثال: setItems(prev => ({
+                            //   ...prev,
+                            //   [item.id]: { ...prev[item.id], star: newStar }
+                            // }));
+                          }}
                           className={`w-8 h-8 flex justify-center items-center rounded-lg transition
-                            ${item.star ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"}`}
+    ${item.star ? "text-yellow-400" : "text-gray-400 hover:text-yellow-400"}`}
                         >
                           <FaStar size={24} />
                         </button>
+
                       </div>
                     </div>
                   ))}

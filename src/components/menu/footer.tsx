@@ -7,6 +7,7 @@ import {
   FaPhoneAlt,
   FaTelegramPlane,
   FaTiktok,
+  FaCommentDots,
 } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { ref, onValue } from "firebase/database";
@@ -108,6 +109,22 @@ export default function Footer() {
                 )
             )}
           </div>
+          {/* Feedback Button */}
+          <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="
+                mt-4 w-full max-w-xs flex items-center justify-center gap-2             
+                bg-[#FDB143] text-[#040309]
+                rounded-2xl
+                py-3 px-4
+                shadow-lg
+                hover:scale-105 hover:shadow-xl
+                transition-all duration-300
+              "
+          >
+            <FaCommentDots className="w-6 h-6 animate-pulse" />
+            <span className="text-sm font-semibold">أرسل تقييمك</span>
+          </button>
         </div>
 
         {/* يسار – توقيع المهندس */}

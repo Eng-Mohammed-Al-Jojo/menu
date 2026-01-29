@@ -41,24 +41,37 @@ const loadFromLocal = () => {
   if (!cached) return null;
   return JSON.parse(cached);
 };
-/* ======================================== */
 
-export default function Menu() {
+/* ================= Main Component ================= */
+interface Props {
+  onLoadingChange?: (loading: boolean) => void; // يمرر للصفحة الرئيسية
+}
+
+export default function Menu({ onLoadingChange }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const [toast, setToast] = useState<{
-    message: string;
-    color: "green" | "red";
-  } | null>(null);
-
+  const [toast, setToast] = useState<{ message: string; color: "green" | "red" } | null>(null);
   const [orderSystem, setOrderSystem] = useState<boolean>(true);
 
   useEffect(() => {
+    if (onLoadingChange) onLoadingChange(true); // بداية التحميل
+
     let timeoutId: number | null = null;
     let firebaseLoaded = false;
+
+    const finishFirebase = (cats: Category[], its: Item[], os: boolean) => {
+      firebaseLoaded = true;
+      saveToLocal(cats, its, os);
+      setLoading(false);
+      if (onLoadingChange) onLoadingChange(false);
+      if (timeoutId) clearTimeout(timeoutId);
+
+      setToast({ message: "تم التحميل من قاعدة البيانات", color: "green" });
+      setTimeout(() => setToast(null), 3000);
+    };
 
     const loadOnline = () => {
       let cats: Category[] = [];
@@ -75,33 +88,17 @@ export default function Menu() {
             setItems(cached.items || []);
             setOrderSystem(cached.orderSystem ?? true);
             setLoading(false);
+            if (onLoadingChange) onLoadingChange(false);
 
-            setToast({
-              message: "الإنترنت ضعيف، تم تحميل آخر نسخة محفوظة",
-              color: "red",
-            });
+            setToast({ message: "الإنترنت ضعيف، تم تحميل آخر نسخة محفوظة", color: "red" });
             setTimeout(() => setToast(null), 4000);
           }
         }
       }, 8000);
 
-      const finishFirebase = () => {
-        firebaseLoaded = true;
-        saveToLocal(cats, its, orderSystem);
-        setLoading(false);
-        if (timeoutId) clearTimeout(timeoutId);
-
-        setToast({
-          message: "تم التحميل من قاعدة البيانات",
-          color: "green",
-        });
-        setTimeout(() => setToast(null), 3000);
-      };
-
-      /* ===== Categories ===== */
+      // Categories
       onValue(ref(db, "categories"), (snap) => {
         const data = snap.val();
-
         cats = data
           ? Object.entries(data).map(([id, v]: any) => ({
             id,
@@ -111,19 +108,15 @@ export default function Menu() {
             createdAt: v.createdAt || 0,
           }))
           : [];
-
-        // ⭐ ترتيب الأقسام حسب order
         cats.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
         setCategories(cats);
         catsLoaded = true;
-        if (itemsLoaded && orderSystemLoaded) finishFirebase();
+        if (itemsLoaded && orderSystemLoaded) finishFirebase(cats, its, orderSystem);
       });
 
-      /* ===== Items ===== */
+      // Items
       onValue(ref(db, "items"), (snap) => {
         const data = snap.val();
-
         its = data
           ? Object.entries(data).map(([id, v]: any) => ({
             id,
@@ -131,18 +124,17 @@ export default function Menu() {
             createdAt: v.createdAt || 0,
           }))
           : [];
-
         setItems(its);
         itemsLoaded = true;
-        if (catsLoaded && orderSystemLoaded) finishFirebase();
+        if (catsLoaded && orderSystemLoaded) finishFirebase(cats, its, orderSystem);
       });
 
-      /* ===== Order System Toggle ===== */
+      // OrderSystem
       onValue(ref(db, "settings/orderSystem"), (snap) => {
         const val = snap.val();
         setOrderSystem(val ?? true);
         orderSystemLoaded = true;
-        if (catsLoaded && itemsLoaded) finishFirebase();
+        if (catsLoaded && itemsLoaded) finishFirebase(cats, its, val ?? true);
       });
     };
 
@@ -151,44 +143,38 @@ export default function Menu() {
         const res = await fetch("/data.json");
         const data = await res.json();
 
-        const cats: Category[] = Object.entries(
-          data.categories || {}
-        ).map(([id, v]: any) => ({
+        const cats: Category[] = Object.entries(data.categories || {}).map(([id, v]: any) => ({
           id,
           name: v.name,
           available: v.available !== false,
           order: v.order ?? 0,
           createdAt: v.createdAt || 0,
         }));
-
         cats.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-        const its: Item[] = Object.entries(data.items || {}).map(
-          ([id, v]: any) => ({
-            id,
-            ...v,
-            createdAt: v.createdAt || 0,
-          })
-        );
+        const its: Item[] = Object.entries(data.items || {}).map(([id, v]: any) => ({
+          id,
+          ...v,
+          createdAt: v.createdAt || 0,
+        }));
 
         setCategories(cats);
         setItems(its);
         setOrderSystem(data.orderSystem ?? true);
         setLoading(false);
+        if (onLoadingChange) onLoadingChange(false);
 
-        setToast({
-          message: "أنت غير متصل – نسخة محلية ثابتة",
-          color: "red",
-        });
+        setToast({ message: "أنت غير متصل – نسخة محلية ثابتة", color: "red" });
         setTimeout(() => setToast(null), 4000);
       } catch {
         setLoading(false);
+        if (onLoadingChange) onLoadingChange(false);
       }
     };
 
     if (navigator.onLine) loadOnline();
     else loadOffline();
-  }, []);
+  }, [onLoadingChange]);
 
   /* ========= فلترة الأقسام المتوفرة فقط ========= */
   const availableCategories = categories.filter((cat) => cat.available);
@@ -220,7 +206,11 @@ export default function Menu() {
   return (
     <main className="max-w-4xl mx-auto px-4 pb-24 space-y-10 font-[Alamiri] text-[#F5F8F7]">
       {toast && (
-        <div className="fixed top-6 right-6 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white bg-[#940D11]">
+        <div
+          className={`fixed top-6 right-6 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white transition
+            ${toast.color === "green" ? "bg-[#FDB143]" : "bg-[#940D11]"}
+          `}
+        >
           {toast.message}
         </div>
       )}
@@ -260,9 +250,7 @@ export default function Menu() {
         ? availableCategories.filter((c) => c.id === activeCategory)
         : availableCategories
       ).map((cat) => {
-        const catItems = items.filter(
-          (i) => i.categoryId === cat.id
-        );
+        const catItems = items.filter((i) => i.categoryId === cat.id);
         if (!catItems.length) return null;
 
         return (

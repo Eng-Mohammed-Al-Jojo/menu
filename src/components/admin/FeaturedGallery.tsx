@@ -12,9 +12,9 @@ const FeaturedGallery: React.FC<Props> = ({ visible, onClose, onSelect, featureI
     if (!visible) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white p-4 rounded-xl w-64">
-                <h3 className="font-bold mb-2 text-center">اختر صورة للصنف</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-white rounded-xl w-full max-w-md sm:max-w-lg md:max-w-xl p-6">
+                <h3 className="font-bold mb-4 text-center text-lg md:text-xl">اختر للصنف</h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                     {featureImages.map((img) => (
                         <button
@@ -22,7 +22,7 @@ const FeaturedGallery: React.FC<Props> = ({ visible, onClose, onSelect, featureI
                             type="button"
                             onClick={() => onSelect(img)}
                             className={`relative rounded-lg overflow-hidden border-2 transition
-                ${selectedImage === img ? "border-[#FDB143]" : "border-transparent hover:border-gray-300"}`}
+            ${selectedImage === img ? "border-[#FDB143]" : "border-transparent hover:border-gray-300"}`}
                         >
                             <img
                                 src={`/featured/${img}`}
@@ -41,12 +41,13 @@ const FeaturedGallery: React.FC<Props> = ({ visible, onClose, onSelect, featureI
                 <button
                     type="button"
                     onClick={onClose}
-                    className="mt-3 w-full py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                    className="mt-4 w-full py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
                 >
                     إلغاء
                 </button>
             </div>
         </div>
+
     );
 };
 

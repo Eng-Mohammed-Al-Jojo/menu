@@ -110,8 +110,15 @@ export default function OrderSettingsModal({
 
     if (loading) return null;
 
-    /* ===== Save ===== */
+    /* ===== Save with Validation ===== */
     const handleSave = async () => {
+        // ⚠️ Validation: check phone numbers
+        if ((inRestaurant && inPhone.trim() === "") || (takeaway && outPhone.trim() === "")) {
+            setToast({ type: "error", message: "❌ الرجاء إدخال رقم واتساب لكل خدمة مفعّلة" });
+            setTimeout(() => setToast(null), 3000);
+            return;
+        }
+
         try {
             setSaving(true);
             await update(ref(db, "settings"), {
@@ -194,7 +201,7 @@ export default function OrderSettingsModal({
 
                     {/* Footer Info */}
                     <div className={sectionClass}>
-                        <p className="font-bold text-sm">📍 معلومات الفوتر</p>
+                        <p className="font-bold text-sm flex items-center gap-2">📍 معلومات الفوتر</p>
 
                         <input
                             placeholder="📍 العنوان"
@@ -203,42 +210,42 @@ export default function OrderSettingsModal({
                             className={inputClass}
                         />
 
-                        <div className="grid grid-cols-2 gap-2">
-                            <input
-                                placeholder="📞 الهاتف"
-                                value={footer.phone}
-                                onChange={(e) => setFooter({ ...footer, phone: e.target.value })}
-                                className={inputClass}
-                            />
-                            <input
-                                placeholder="💬 واتساب"
-                                value={footer.whatsapp}
-                                onChange={(e) => setFooter({ ...footer, whatsapp: e.target.value })}
-                                className={inputClass}
-                            />
-                        </div>
+                        <input
+                            placeholder="📞 الهاتف"
+                            value={footer.phone}
+                            onChange={(e) => setFooter({ ...footer, phone: e.target.value })}
+                            className={inputClass}
+                        />
 
-                        <div className="grid grid-cols-3 gap-2">
-                            <input
-                                placeholder="Facebook"
-                                value={footer.facebook}
-                                onChange={(e) => setFooter({ ...footer, facebook: e.target.value })}
-                                className={inputClass}
-                            />
-                            <input
-                                placeholder="Instagram"
-                                value={footer.instagram}
-                                onChange={(e) => setFooter({ ...footer, instagram: e.target.value })}
-                                className={inputClass}
-                            />
-                            <input
-                                placeholder="TikTok"
-                                value={footer.tiktok}
-                                onChange={(e) => setFooter({ ...footer, tiktok: e.target.value })}
-                                className={inputClass}
-                            />
-                        </div>
+                        <input
+                            placeholder="💬 واتساب"
+                            value={footer.whatsapp}
+                            onChange={(e) => setFooter({ ...footer, whatsapp: e.target.value })}
+                            className={inputClass}
+                        />
+
+                        <input
+                            placeholder="Facebook"
+                            value={footer.facebook}
+                            onChange={(e) => setFooter({ ...footer, facebook: e.target.value })}
+                            className={inputClass}
+                        />
+
+                        <input
+                            placeholder="Instagram"
+                            value={footer.instagram}
+                            onChange={(e) => setFooter({ ...footer, instagram: e.target.value })}
+                            className={inputClass}
+                        />
+
+                        <input
+                            placeholder="TikTok"
+                            value={footer.tiktok}
+                            onChange={(e) => setFooter({ ...footer, tiktok: e.target.value })}
+                            className={inputClass}
+                        />
                     </div>
+
                 </div>
 
                 {/* Save (ثابت) */}

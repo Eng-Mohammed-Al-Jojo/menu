@@ -6,8 +6,8 @@ import { FaFire } from "react-icons/fa";
 import FeaturedModal from "../components/menu/FeaturedModal";
 
 export default function MenuPage() {
-  // const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
+  const [loading, setLoading] = useState(true); // حالة التحميل
 
   return (
     <div
@@ -23,7 +23,7 @@ export default function MenuPage() {
       "
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-[#040309]/70 backdrop-blur-md z-0"></div>
+      <div className="absolute inset-0 bg-[#040309]/70 backdrop-blur-md pointer-events-none"></div>
 
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -38,59 +38,46 @@ export default function MenuPage() {
 
         {/* Menu */}
         <div className="flex-1 w-full px-4 md:px-10">
-          <Menu />
+          {/* نمرر setLoading لـ Menu ليتمكن من إيقاف التحميل */}
+          <Menu onLoadingChange={setLoading} />
         </div>
 
         {/* Footer */}
         <Footer />
       </div>
 
-      {/* Buttons Fixed */}
-      {/* Feedback */}
-      {/* <button
-        onClick={() => setShowFeedbackModal(true)}
-        className="
-          fixed top-4 left-4 md:left-6 w-12 h-12 flex items-center justify-center
-          bg-[#FDB143] text-[#040309]
-          rounded-full
-          shadow-[0_0_30px_rgba(253,177,67,0.6)]
-          hover:scale-110 transition
-          z-50
-        "
-      >
-        <FaCommentDots className="w-6 h-6 animate-pulse" />
-      </button> */}
+      {/* Featured Button يظهر فقط بعد انتهاء التحميل */}
+      {!loading && (
+        <div className="fixed top-4 left-4 z-50 flex flex-col items-center">
+          <button
+            onClick={() => setShowFeaturedModal(true)}
+            className="
+              flex flex-col items-center justify-center
+              w-16 h-16
+              bg-linear-to-br from-[#FDB143] via-[#FDB143] to-[#FDB143]
+              text-[#040309] font-bold
+              rounded-2xl
+              shadow-lg
+              hover:scale-110 hover:shadow-xl
+              transition-all duration-300
+              backdrop-blur-sm
+            "
+            title="الأكثر طلباً"
+          >
+            <FaFire className="w-6 h-6 animate-pulse text-[#9b2d0b]" />
+            <span className="text-[10px] mt-1">الأكثر طلباً</span>
+          </button>
+        </div>
+      )}
 
-      {/* Featured */}
-      <button
-        onClick={() => setShowFeaturedModal(true)}
-        className="
-    fixed top-4 left-4 flex flex-col items-center justify-center
-    w-16 h-16
-    bg-linear-to-br from-[#FDB143] via-[#FDB143] to-[#FDB143]
-    text-[#040309] font-bold
-    rounded-2xl
-    shadow-lg
-    hover:scale-110 hover:shadow-xl
-    transition-all duration-300
-    z-50
-    backdrop-blur-sm
-  "
-        title="الأكثر طلباً"
-      >
-        <FaFire className="w-6 h-6 animate-pulse text-[#9b2d0b]" />
-        <span className="text-[10px] mt-1" >الأكثر طلباً</span>
-      </button>
+      {/* Cart Button يظهر فقط بعد انتهاء التحميل */}
+      {!loading && (
+        <div className="fixed bottom-6 right-4 z-50">
+          <CartButton />
+        </div>
+      )}
 
-
-      {/* Cart */}
-      <CartButton className="fixed bottom-6 right-4 z-40" />
-
-      {/* Modals */}
-      {/* <FeedbackModal
-        show={showFeedbackModal}
-        onClose={() => setShowFeedbackModal(false)}
-      /> */}
+      {/* Featured Modal */}
       <FeaturedModal
         show={showFeaturedModal}
         onClose={() => setShowFeaturedModal(false)}
