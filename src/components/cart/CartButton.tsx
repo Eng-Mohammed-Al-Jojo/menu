@@ -3,7 +3,11 @@ import { FaShoppingCart } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import CartModal from "./CartModal";
 
-export default function CartButton() {
+interface CartButtonProps {
+    className?: string;
+}
+
+export default function CartButton({ className = "" }: CartButtonProps) {
     const { totalItems } = useCart();
     const [open, setOpen] = useState(false);
 
@@ -14,7 +18,7 @@ export default function CartButton() {
             {/* زر الكارت */}
             <button
                 onClick={() => setOpen(true)}
-                className="
+                className={`
           fixed bottom-6 right-6 z-40
           flex items-center gap-2
           bg-[#FDB143] text-[#040309]
@@ -22,7 +26,8 @@ export default function CartButton() {
           shadow-2xl
           hover:scale-105 transition
           font-[Cairo] font-bold
-        "
+          ${className}
+        `}
             >
                 <FaShoppingCart className="text-xl" />
                 <span className="text-sm">{totalItems}</span>

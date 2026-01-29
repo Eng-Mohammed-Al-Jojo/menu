@@ -31,4 +31,8 @@ export interface Item {
   categoryId: string;
   visible: boolean;
   createdAt: number;
+
+  featured?: string;
+  star?: boolean; // ✅ جديد
+
 }

@@ -52,6 +52,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [showOrderSettings, setShowOrderSettings] = useState(false);
   const [orderSettings, setOrderSettings] = useState<any>(null);
+  // const [showEditGallery, setShowEditGallery] = useState(false);
 
   // ================= AUTH LISTENER =================
   useEffect(() => {
