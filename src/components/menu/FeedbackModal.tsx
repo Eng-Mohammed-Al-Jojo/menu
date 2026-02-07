@@ -66,8 +66,13 @@ export default function FeedbackModal({ show, onClose }: Props) {
             return;
         }
 
-        const fullMessage = `🔹 الاسم: ${name || "-"}\n🔹 الجوال: ${phone || "-"
-            }\n🔹 التقييم: ${rating}/5\n🔹 الملاحظة: ${message}`;
+        const fullMessage = `⭐ تقييم زبون ⭐
+            ------------------
+            🔹 الاسم: ${name || "-"}
+            🔹 الجوال: ${phone || "-"}
+            🔹 التقييم: ${rating}/5
+            🔹 الملاحظة: ${message || "-"}`;
+
 
         const url =
             "https://wa.me/" + feedbackPhone + "?text=" + encodeURIComponent(fullMessage);
@@ -126,7 +131,7 @@ export default function FeedbackModal({ show, onClose }: Props) {
                                     <FaStar className="text-[#444] w-8 h-8" />
                                     <FaStar
                                         className={`absolute top-0 left-0 w-8 h-8 transition-transform duration-200 
-          ${star <= (hoverRating || rating)
+                                                 ${star <= (hoverRating || rating)
                                                 ? "text-yellow-400 scale-125 drop-shadow-lg"
                                                 : "text-transparent"
                                             } hover:scale-120 hover:text-yellow-300`}

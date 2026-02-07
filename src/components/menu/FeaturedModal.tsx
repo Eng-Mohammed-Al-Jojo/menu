@@ -13,7 +13,7 @@ interface Item {
     name: string;
     description?: string;
     price: string;
-    featured?: string; // اسم الصورة
+    image?: string; // اسم الصورة
     star?: boolean;    // ⭐ نجمة
     visible?: boolean;
 }
@@ -55,20 +55,20 @@ export default function FeaturedModal({ show, onClose }: Props) {
             {/* Overlay */}
             <div
                 onClick={onClose}
-                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                className="absolute inset-0 bg-white/80 backdrop-blur-md"
             />
 
             {/* Modal */}
-            <div className="relative w-[90%] max-w-2xl bg-[#040309] rounded-3xl px-6 py-8 shadow-inner shadow-[#FDB143]">
+            <div className="relative w-[90%] max-w-2xl bg-white/80 rounded-3xl px-6 py-8 shadow-inner shadow-[#a62303]">
                 {/* Close */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 left-4 text-[#FDB143]"
+                    className="absolute top-4 left-4 text-[#a62303]"
                 >
                     <FaTimes size={22} />
                 </button>
 
-                <h2 className="text-center text-3xl font-extrabold mb-6 text-[#FDB143]">
+                <h2 className="text-center text-3xl font-extrabold mb-6 text-[#a62303]">
                     ⭐ الأصناف الأكثر طلباً
                 </h2>
 
@@ -95,7 +95,7 @@ export default function FeaturedModal({ show, onClose }: Props) {
                                 key={item.id}
                                 className="w-full shrink-0 snap-center px-2"
                             >
-                                <div className="bg-[#0c0b10] rounded-3xl overflow-hidden shadow-xl">
+                                <div className="bg-white/80 rounded-3xl overflow-hidden shadow-xl">
                                     {/* Image */}
                                     <div className="flex justify-center mt-4">
                                         <div className="
@@ -108,7 +108,7 @@ export default function FeaturedModal({ show, onClose }: Props) {
                                             flex items-center justify-center
                                         ">
                                             <img
-                                                src={item.featured ? `/featured/${item.featured}` : `/hamada.png`}
+                                                src={item.image ? `/images/${item.image}` : `/hamada.png`}
                                                 alt={item.name}
                                                 className="w-full h-full object-cover"
                                             />
@@ -127,7 +127,7 @@ export default function FeaturedModal({ show, onClose }: Props) {
                                             </p>
                                         )}
 
-                                        <div className="text-2xl font-extrabold text-[#FDB143]">
+                                        <div className="text-2xl font-extrabold text-[#a62303]">
                                             {item.price}₪
                                         </div>
                                     </div>

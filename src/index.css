@@ -1,6 +1,35 @@
 @import "tailwindcss";
 
+@import "swiper/css";
+@import "swiper/css/navigation";
+@import "swiper/css/pagination";
 
+/* النقاط العادية */
+.swiper-pagination-bullet {
+  background-color: black;
+  /* اللون الجديد، توتي */
+  opacity: 0.7;
+}
+
+/* النقطة النشطة */
+.swiper-pagination-bullet-active {
+  background-color: #a70a05;
+  /* اللون الذهبي للنشطة */
+  opacity: 1;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: #a70a05;
+  /* اللون الذهبي */
+  background: rgba(0, 0, 0, 0.2);
+  /* خلفية خفيفة */
+  border-radius: 50%;
+  /* دائري */
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+}
 
 @font-face {
   font-family: 'Playpen Sans Arabic';
@@ -194,4 +223,101 @@ body {
 
 .animate-slideUp {
   animation: slideUp 0.25s ease-out;
+}
+
+@keyframes floatSlow {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-floatSlow {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+/* أنيميشن Toast */
+@keyframes toast-show {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -150%) scale(0.9);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1.05);
+  }
+
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -150%) scale(0.95);
+  }
+}
+
+/* class لإستدعاء الانيميشن */
+.animate-toast-show {
+  animation: toast-show 1s ease-in-out forwards;
+}
+
+
+/* مخصص للitemRow animations*/
+
+@keyframes itemEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes imagePop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toastShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -70px) scale(1);
+  }
+}
+
+.animate-item-enter {
+  animation: itemEnter 0.45s ease-out both;
+}
+
+.animate-image-pop {
+  animation: imagePop 0.4s ease-out both;
+}
+
+.animate-toast-show {
+  animation: toastShow 0.3s ease-out both;
 }

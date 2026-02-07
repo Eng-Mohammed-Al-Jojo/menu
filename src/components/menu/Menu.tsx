@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { db } from "../../firebase";
 import { ref, onValue } from "firebase/database";
 import CategorySection from "./CategorySection";
+import { Swiper, SwiperSlide } from "swiper/react";
+
+import { Navigation, Pagination, Keyboard } from "swiper/modules";
 
 /* ================= Types ================= */
 export interface Category {
@@ -13,6 +16,8 @@ export interface Category {
 }
 
 export interface Item {
+  featured: any;
+  image: string | undefined;
   id: string;
   name: string;
   price: number;
@@ -20,6 +25,7 @@ export interface Item {
   priceTw?: number;
   categoryId: string;
   visible?: boolean;
+  star?: boolean;
   createdAt?: number;
 }
 
@@ -44,20 +50,59 @@ const loadFromLocal = () => {
 
 /* ================= Main Component ================= */
 interface Props {
-  onLoadingChange?: (loading: boolean) => void; // يمرر للصفحة الرئيسية
+  onLoadingChange?: (loading: boolean) => void;
+  onFeaturedCheck?: (hasFeatured: boolean) => void;
 }
 
-export default function Menu({ onLoadingChange }: Props) {
+export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  const [toast, setToast] = useState<{ message: string; color: "green" | "red" } | null>(null);
   const [orderSystem, setOrderSystem] = useState<boolean>(true);
 
+  const [toast, setToast] = useState<{ message: string; color: "green" | "red" } | null>(null);
+
+  /* ================= Load Backup JSON ================= */
+  const loadMenuJson = async () => {
+    try {
+      const res = await fetch("/menu.json");
+      const data = await res.json();
+
+      const cats: Category[] = Object.entries(data.categories || {}).map(
+        ([id, v]: any) => ({
+          id,
+          name: v.name,
+          available: v.available !== false,
+          order: v.order ?? 0,
+          createdAt: v.createdAt || 0,
+        })
+      ).sort((a, b) => a.order - b.order);
+
+      const its: Item[] = Object.entries(data.items || {}).map(
+        ([id, v]: any) => ({
+          id,
+          ...v,
+          createdAt: v.createdAt || 0,
+        })
+      );
+
+      setCategories(cats);
+      setItems(its);
+      setOrderSystem(data.orderSystem ?? true);
+      setLoading(false);
+      onLoadingChange?.(false);
+
+      setToast({ message: "تم تحميل نسخة احتياطية", color: "red" });
+      setTimeout(() => setToast(null), 4000);
+    } catch {
+      setLoading(false);
+      onLoadingChange?.(false);
+    }
+  };
+
+  /* ================= useEffect ================= */
   useEffect(() => {
-    if (onLoadingChange) onLoadingChange(true); // بداية التحميل
+    onLoadingChange?.(true);
 
     let timeoutId: number | null = null;
     let firebaseLoaded = false;
@@ -66,7 +111,7 @@ export default function Menu({ onLoadingChange }: Props) {
       firebaseLoaded = true;
       saveToLocal(cats, its, os);
       setLoading(false);
-      if (onLoadingChange) onLoadingChange(false);
+      onLoadingChange?.(false);
       if (timeoutId) clearTimeout(timeoutId);
 
       setToast({ message: "تم التحميل من قاعدة البيانات", color: "green" });
@@ -81,22 +126,22 @@ export default function Menu({ onLoadingChange }: Props) {
       let orderSystemLoaded = false;
 
       timeoutId = window.setTimeout(() => {
-        if (!firebaseLoaded) {
-          const cached = loadFromLocal();
-          if (cached) {
-            setCategories(cached.categories || []);
-            setItems(cached.items || []);
-            setOrderSystem(cached.orderSystem ?? true);
-            setLoading(false);
-            if (onLoadingChange) onLoadingChange(false);
+        if (firebaseLoaded) return;
+        const cached = loadFromLocal();
+        if (cached) {
+          setCategories(cached.categories || []);
+          setItems(cached.items || []);
+          setOrderSystem(cached.orderSystem ?? true);
+          setLoading(false);
+          onLoadingChange?.(false);
 
-            setToast({ message: "الإنترنت ضعيف، تم تحميل آخر نسخة محفوظة", color: "red" });
-            setTimeout(() => setToast(null), 4000);
-          }
+          setToast({ message: "الإنترنت ضعيف، تم تحميل آخر نسخة محفوظة", color: "red" });
+          setTimeout(() => setToast(null), 4000);
+        } else {
+          loadMenuJson();
         }
       }, 8000);
 
-      // Categories
       onValue(ref(db, "categories"), (snap) => {
         const data = snap.val();
         cats = data
@@ -114,7 +159,6 @@ export default function Menu({ onLoadingChange }: Props) {
         if (itemsLoaded && orderSystemLoaded) finishFirebase(cats, its, orderSystem);
       });
 
-      // Items
       onValue(ref(db, "items"), (snap) => {
         const data = snap.val();
         its = data
@@ -129,7 +173,6 @@ export default function Menu({ onLoadingChange }: Props) {
         if (catsLoaded && orderSystemLoaded) finishFirebase(cats, its, orderSystem);
       });
 
-      // OrderSystem
       onValue(ref(db, "settings/orderSystem"), (snap) => {
         const val = snap.val();
         setOrderSystem(val ?? true);
@@ -138,130 +181,57 @@ export default function Menu({ onLoadingChange }: Props) {
       });
     };
 
-    const loadOffline = async () => {
-      try {
-        const res = await fetch("/data.json");
-        const data = await res.json();
-
-        const cats: Category[] = Object.entries(data.categories || {}).map(([id, v]: any) => ({
-          id,
-          name: v.name,
-          available: v.available !== false,
-          order: v.order ?? 0,
-          createdAt: v.createdAt || 0,
-        }));
-        cats.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-        const its: Item[] = Object.entries(data.items || {}).map(([id, v]: any) => ({
-          id,
-          ...v,
-          createdAt: v.createdAt || 0,
-        }));
-
-        setCategories(cats);
-        setItems(its);
-        setOrderSystem(data.orderSystem ?? true);
-        setLoading(false);
-        if (onLoadingChange) onLoadingChange(false);
-
-        setToast({ message: "أنت غير متصل – نسخة محلية ثابتة", color: "red" });
-        setTimeout(() => setToast(null), 4000);
-      } catch {
-        setLoading(false);
-        if (onLoadingChange) onLoadingChange(false);
-      }
-    };
-
     if (navigator.onLine) loadOnline();
-    else loadOffline();
+    else loadMenuJson();
   }, [onLoadingChange]);
 
-  /* ========= فلترة الأقسام المتوفرة فقط ========= */
+  /* ================= Check Featured Items ================= */
+  useEffect(() => {
+    const hasFeatured = items.some((item) => item.star === true);
+    onFeaturedCheck?.(hasFeatured);
+  }, [items, onFeaturedCheck]);
+
   const availableCategories = categories.filter((cat) => cat.available);
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#231F20] font-[Almarai] font-bold">
-        <div className="relative w-56 h-56 mb-6">
-          <img
-            src="/hamada.png"
-            alt="Logo"
-            className="w-full h-full object-contain rounded-full shadow-2xl animate-pulseScale"
-          />
-          <div className="absolute inset-0 rounded-full border-4 border-[#FDB143]/50 animate-ping"></div>
-        </div>
-
-        <h2 className="text-3xl md:text-5xl font-extrabold text-[#F7F3E8]">
-          يتم تحضير القائمة
-          <span className="text-[#FDB143] animate-ping ml-1">...</span>
-        </h2>
-
-        <p className="mt-4 text-[#F7F3E8]/70 text-lg md:text-xl font-[Alamiri]">
-          انتظر قليلاً، سيتم عرض كل الأصناف قريباً
-        </p>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[url('/bg.jpg')] bg-cover">
+        <div className="absolute inset-0 bg-black/40" />
+        <p className="text-white text-2xl">تحميل...</p>
       </div>
     );
-  }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 pb-24 space-y-10 font-[Alamiri] text-[#F5F8F7]">
+    <main className="max-w-4xl mx-auto px-0 pb-10 font-[Alamiri] text-[#F5F8F7]">
       {toast && (
         <div
-          className={`fixed top-6 right-6 px-6 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white transition
-            ${toast.color === "green" ? "bg-[#FDB143]" : "bg-[#940D11]"}
-          `}
+          className={`fixed top-6 right-6 px-4 py-3 rounded-2xl font-bold shadow-2xl z-50 text-white transition
+          ${toast.color === "green" ? "bg-[#FDB143]" : "bg-[#940D11]"}`}
         >
           {toast.message}
         </div>
       )}
 
-      {/* ===== Filter Tabs ===== */}
-      <div className="flex flex-wrap gap-3 justify-center">
-        <button
-          onClick={() => setActiveCategory(null)}
-          className={`px-4 py-2 rounded-full font-bold transition font-[Cairo]
-            ${activeCategory === null
-              ? "bg-[#FDB143] text-[#040309] text-lg"
-              : "bg-[#F5F8F7] text-[#040309]/80 text-xs"
-            }`}
-        >
-          جميع الأصناف
-        </button>
+      {/* ===== Swiper الأقسام ===== */}
+      <Swiper
+        modules={[Navigation, Pagination, Keyboard]}
+        navigation
+        pagination={{ clickable: true }}
+        keyboard={{ enabled: true }}
+        spaceBetween={50}
+        slidesPerView={1}
 
-        {availableCategories
-          .filter((cat) => items.some((i) => i.categoryId === cat.id))
-          .map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-full font-bold transition font-[Cairo]
-                ${activeCategory === cat.id
-                  ? "bg-[#FDB143] text-[#040309] text-sm"
-                  : "bg-[#F5F8F7] text-[#040309]/80 text-xs"
-                }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-      </div>
-
-      {/* ===== عرض الأقسام والأصناف ===== */}
-      {(activeCategory
-        ? availableCategories.filter((c) => c.id === activeCategory)
-        : availableCategories
-      ).map((cat) => {
-        const catItems = items.filter((i) => i.categoryId === cat.id);
-        if (!catItems.length) return null;
-
-        return (
-          <CategorySection
-            key={cat.id}
-            category={cat}
-            items={catItems}
-            orderSystem={orderSystem}
-          />
-        );
-      })}
+      >
+        {availableCategories.map((cat) => {
+          const catItems = items.filter((i) => i.categoryId === cat.id);
+          if (!catItems.length) return null;
+          return (
+            <SwiperSlide key={cat.id}>
+              <CategorySection category={cat} items={catItems} orderSystem={orderSystem} />
+            </SwiperSlide>
+          );
+        })}
+      </Swiper>
     </main>
   );
 }

@@ -5,11 +5,13 @@ import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import type { PopupState, Category, Item } from "./types";
 import FeaturedGallery from "./FeaturedGallery";
+import CustomSelect from "./CustomSelect"; // عدّل المسار حسب مكان الملف
+
 
 /* ================== auto load feature images from public/featured ================== */
-const featureImages = Object.keys(
-  import.meta.glob("/public/featured/*")
-).map((path) => path.replace("/public/featured/", ""));
+const galleryImages = Object.keys(
+  import.meta.glob("/public/images/*")
+).map((path) => path.replace("/public/images/", ""));
 /* ================================================================== */
 
 interface Props {
@@ -27,22 +29,37 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
   const [itemPrice, setItemPrice] = useState("");
   const [quickSearch, setQuickSearch] = useState("");
 
+  const [selectedCategoryError, setSelectedCategoryError] = useState(false);
+  const [itemNameError, setItemNameError] = useState(false);
+  const [itemPriceError, setItemPriceError] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
   // ================== Gallery state ==================
   const [showGallery, setShowGallery] = useState(false);
   const [galleryForItemId, setGalleryForItemId] = useState<string | null>(null);
-  const [itemFeatured, setItemFeatured] = useState(""); // الصورة الحالية في المودال
+  const [itemImage, setItemImage] = useState("");
 
   // ================== Local state for items ==================
   const [localItems, setLocalItems] = useState<Record<string, Item>>(items);
 
-  // تحديث الـ state المحلي إذا تغيّر الـ prop
   useEffect(() => {
     setLocalItems(items);
   }, [items]);
 
   // ================== Firebase updates ==================
   const addItem = async () => {
-    if (!selectedCategory || !itemName || !itemPrice) return;
+    // ===== فاليديشن =====
+    let hasError = false;
+    if (!selectedCategory) { setSelectedCategoryError(true); hasError = true; }
+    if (!itemName.trim()) { setItemNameError(true); hasError = true; }
+
+    const priceArray = itemPrice.split(",").map(p => p.trim());
+    if (!itemPrice.trim() || priceArray.some(p => isNaN(Number(p)) || Number(p) <= 0)) {
+      setItemPriceError(true);
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     await push(ref(db, "items"), {
       name: itemName,
@@ -51,7 +68,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
       categoryId: selectedCategory,
       visible: true,
       createdAt: Date.now(),
-      featured: itemFeatured || "",
+      image: itemImage || "", // ✅
       star: false,
     });
 
@@ -60,62 +77,69 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
     setItemIngredients("");
     setItemPrice("");
     setSelectedCategory("");
-    setItemFeatured("");
+    setItemImage("");
+
+    // Show toast
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 1500);
   };
 
   const toggleItem = async (id: string, visible: boolean) => {
     await update(ref(db, `items/${id}`), { visible: !visible });
   };
 
-  const updateFeatured = async (id: string, featured: string) => {
-    await update(ref(db, `items/${id}`), { featured });
+  const updateImage = async (id: string, image: string) => {
+    await update(ref(db, `items/${id}`), { image });
   };
 
-  const removeFeatured = async (id: string) => {
-    await update(ref(db, `items/${id}`), { featured: "" });
+  const removeImage = async (id: string) => {
+    await update(ref(db, `items/${id}`), { image: "" });
   };
 
-  // ================== Gallery handlers ==================
-  const openGallery = (itemId: string, currentFeatured?: string) => {
+  const openGallery = (itemId: string, currentImage?: string) => {
     setGalleryForItemId(itemId);
-    setItemFeatured(currentFeatured || "");
+    setItemImage(currentImage || "");
     setShowGallery(true);
   };
 
   const handleSelectImage = async (img: string) => {
     if (!galleryForItemId) return;
-    await updateFeatured(galleryForItemId, img);
+    await updateImage(galleryForItemId, img);
     setShowGallery(false);
   };
 
+
   const toggleSection = (id: string) => {
-    setExpandedSections((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // ================== JSX ==================
   return (
-    <div className="bg-white p-5 rounded-2xl border-4" style={{ borderColor: "#FDB143" }}>
+    <div className="bg-white p-5 rounded-2xl border-4 border-[#FDB143] relative">
       <h2 className="font-bold mb-4 text-2xl text-gray-800">الأصناف حسب الأقسام</h2>
 
       {/* ================== إضافة صنف ================== */}
-      <div className="flex flex-col gap-2 mb-5">
-        <select
-          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDB143]"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="">اختر القسم</option>
-          {Object.keys(categories).map((id) => (
-            <option key={id} value={id}>{categories[id].name}</option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex flex-col">
+          <CustomSelect
+            options={Object.keys(categories).map(id => ({ id, name: categories[id].name }))}
+            value={selectedCategory}
+            onChange={(val) => { setSelectedCategory(val); setSelectedCategoryError(false); }}
+            error={selectedCategoryError}
+            placeholder="اختر القسم"
+          />
+          {selectedCategoryError && <span className="text-xs text-red-500 mt-1">الرجاء اختيار قسم</span>}
+        </div>
 
-        <input
-          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDB143]"
-          placeholder="اسم الصنف"
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-        />
+        <div className="flex flex-col">
+          <input
+            className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#FDB143]
+              ${itemNameError ? "border-red-500" : "border-gray-300"}`}
+            placeholder="اسم الصنف"
+            value={itemName}
+            onChange={(e) => { setItemName(e.target.value); setItemNameError(false); }}
+          />
+          {itemNameError && <span className="text-xs text-red-500 mt-1">الرجاء إدخال اسم الصنف</span>}
+        </div>
 
         <input
           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDB143]"
@@ -124,19 +148,31 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
           onChange={(e) => setItemIngredients(e.target.value)}
         />
 
-        <input
-          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FDB143]"
-          placeholder="الأسعار (افصل بين الأسعار بفاصلة)"
-          value={itemPrice}
-          onChange={(e) => setItemPrice(e.target.value)}
-        />
+        <div className="flex flex-col">
+          <input
+            className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#FDB143]
+              ${itemPriceError ? "border-red-500" : "border-gray-300"}`}
+            placeholder="الأسعار (افصل بين الأسعار بفاصلة)"
+            value={itemPrice}
+            onChange={(e) => { setItemPrice(e.target.value); setItemPriceError(false); }}
+          />
+          {itemPriceError && <span className="text-xs text-red-500 mt-1">الرجاء إدخال أسعار صحيحة مفصولة بفواصل</span>}
+        </div>
 
         <button
           onClick={addItem}
-          className="bg-[#FDB143] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#FDB143]/80 transition"
+          className="bg-[#FDB143] text-black font-semibold px-5 py-2 rounded-lg hover:bg-[#FDB143]/80 transition shadow-md shadow-yellow-400/30"
         >
           إضافة الصنف
         </button>
+
+        {/* Toast */}
+        {showToast && (
+          <div className="absolute top-0 right-1/2 transform translate-x-1/2 -translate-y-full
+            bg-linear-to-r from-[#FFD369] to-[#FDB143] text-black px-4 py-2 rounded-2xl font-bold shadow-lg shadow-black/30 transition animate-fade-in-out z-50">
+            تمت إضافة الصنف بنجاح
+          </div>
+        )}
       </div>
 
       {/* ================== البحث ================== */}
@@ -149,17 +185,17 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
 
       {/* ================== الأقسام ================== */}
       <div className="space-y-3">
-        {Object.keys(categories).map((catId) => {
+        {Object.keys(categories).map(catId => {
           const cat = categories[catId];
           const catItems = Object.keys(localItems)
-            .map((id) => ({ ...localItems[id], id }))
-            .filter((item) => item.categoryId === catId)
-            .filter((item) => {
+            .map(id => ({ ...localItems[id], id }))
+            .filter(item => item.categoryId === catId)
+            .filter(item => {
               const search = quickSearch.toLowerCase();
               return (
                 item.name.toLowerCase().includes(search) ||
                 cat.name.toLowerCase().includes(search) ||
-                item.price.split(",").some((p) => p.includes(search))
+                item.price.split(",").some(p => p.includes(search))
               );
             });
 
@@ -169,28 +205,43 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                 className="flex justify-between items-center cursor-pointer px-4 py-2 font-semibold text-gray-800 bg-gray-50 rounded-t-lg hover:bg-gray-100 transition"
                 onClick={() => toggleSection(catId)}
               >
-                {cat.name}
-                <span>{expandedSections[catId] ? "▲" : "▼"}</span>
+
+                <span>{cat.name}
+                  <span className="bg-[#FDB143] text-white text-sm px-2 py-0.5 mr-4 rounded-full">
+                    {catItems.length}
+                  </span>
+                </span>
+
+                <span>
+
+
+                  {expandedSections[catId] ? "▲" : "▼"}
+                </span>
+
               </div>
 
               {expandedSections[catId] && (
                 <div className="divide-y divide-gray-100">
-                  {catItems.map((item) => (
+                  {catItems.map(item => (
                     <div
                       key={item.id}
-                      className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 py-2 bg-white gap-2"
+                      className={`flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 py-2 gap-2
+                        ${!item.visible ? "opacity-60 line-through" : ""}`}
                     >
                       <div className="flex-1 min-w-0 flex items-center gap-2">
-                        {item.featured ? (
+                        {item.image ? (
                           <div className="relative">
                             <img
-                              src={`/featured/${item.featured}`}
+                              src={`/images/${item.image}`}
                               alt={item.name}
-                              className="w-10 h-10 object-contain bg-black rounded cursor-pointer"
-                              onClick={() => openGallery(item.id, item.featured)}
+                              className="w-10 h-10 object-contain bg-gray-100 rounded cursor-pointer"
+                              onError={(e) => {
+                                e.currentTarget.src = "/images/placeholder.png";
+                              }}
+                              onClick={() => openGallery(item.id, item.image)}
                             />
                             <button
-                              onClick={() => removeFeatured(item.id)}
+                              onClick={() => removeImage(item.id)}
                               className="absolute -top-2 -right-2 w-5 h-5 flex justify-center items-center bg-red-600 text-white rounded-full hover:bg-red-700 transition text-xs"
                             >
                               ×
@@ -206,11 +257,11 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                         )}
 
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-gray-700">{item.name}</p>
+                          <p className={`truncate font-medium ${!item.visible ? "text-gray-400" : "text-gray-700"}`}>{item.name}</p>
                           {item.ingredients && (
-                            <p className="truncate text-sm text-gray-500">{item.ingredients}</p>
+                            <p className={`truncate text-sm ${!item.visible ? "text-gray-400" : "text-gray-500"}`}>{item.ingredients}</p>
                           )}
-                          <p className="truncate text-sm text-gray-400">{item.price} ₪</p>
+                          <p className={`truncate text-sm ${!item.visible ? "text-gray-400" : "text-gray-400"}`}>{item.price} ₪</p>
                         </div>
                       </div>
 
@@ -235,22 +286,22 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                         >
                           <FiTrash2 size={16} />
                         </button>
-
-                        {/* ⭐ Toggle Star */}
                         <button
                           onClick={async () => {
+                            if (!item.visible) return; // لا يسمح بالتعديل إذا غير متوفر
                             const newStar = !localItems[item.id].star;
                             await update(ref(db, `items/${item.id}`), { star: newStar });
-                            setLocalItems((prev) => ({
+                            setLocalItems(prev => ({
                               ...prev,
-                              [item.id]: { ...prev[item.id], star: newStar },
+                              [item.id]: { ...prev[item.id], star: newStar }
                             }));
                           }}
-                          className={`w-8 h-8 flex justify-center items-center rounded-lg transition ${localItems[item.id].star ? "text-yellow-400" : "text-gray-400 hover:text-yellow-400"}`}
+                          className={`w-8 h-8 flex justify-center items-center rounded-lg transition
+                            ${!item.visible ? "text-gray-300 cursor-not-allowed" : localItems[item.id].star ? "text-yellow-400" : "text-gray-400 hover:text-yellow-400"}
+                          `}
                         >
                           <FaStar size={24} />
                         </button>
-
                       </div>
                     </div>
                   ))}
@@ -267,13 +318,12 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
         })}
       </div>
 
-      {/* ================== Featured Gallery Modal ================== */}
       <FeaturedGallery
         visible={showGallery}
         onClose={() => setShowGallery(false)}
         onSelect={handleSelectImage}
-        featureImages={featureImages}
-        selectedImage={itemFeatured}
+        galleryImages={galleryImages}
+        selectedImage={itemImage}
       />
     </div>
   );

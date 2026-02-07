@@ -53,6 +53,13 @@ export default function Admin() {
   const [showOrderSettings, setShowOrderSettings] = useState(false);
   const [orderSettings, setOrderSettings] = useState<any>(null);
   // const [showEditGallery, setShowEditGallery] = useState(false);
+  const [settings, setSettings] = useState({
+    orderSystem: false,
+    orderSettings: { inRestaurant: false, takeaway: false, inPhone: "", outPhone: "" },
+    complaintsWhatsapp: "",
+    footerInfo: { address: "", phone: "", whatsapp: "", facebook: "", instagram: "", tiktok: "" },
+  });
+
 
   // ================= AUTH LISTENER =================
   useEffect(() => {
@@ -82,39 +89,55 @@ export default function Admin() {
   useEffect(() => {
     if (!authOk) return;
 
-    const settingsRef = ref(db, "settings/orderSettings");
-
+    const settingsRef = ref(db, "settings"); // ⚡ جلب كل الإعدادات
     const initSettings = async () => {
       const snap = await get(settingsRef);
       if (!snap.exists()) {
-        // إذا مش موجود، نضيف إعدادات افتراضية
-        await set(settingsRef, {
-          inRestaurant: false,
-          inPhone: "",
-          takeaway: false,
-          outPhone: "",
-        });
-        setOrderSettings({
-          inRestaurant: false,
-          inPhone: "",
-          takeaway: false,
-          outPhone: "",
-        });
+        // إذا مش موجود، نضيف إعدادات افتراضية كاملة
+        const defaultSettings = {
+          complaintsWhatsapp: "",
+          footerInfo: {
+            address: "",
+            facebook: "",
+            instagram: "",
+            phone: "",
+            tiktok: "",
+            whatsapp: ""
+          },
+          orderSettings: {
+            inRestaurant: false,
+            inPhone: "",
+            takeaway: false,
+            outPhone: "",
+          },
+          orderSystem: true
+        };
+        await set(settingsRef, defaultSettings);
+        setSettings(defaultSettings);
+        setOrderSettings(defaultSettings); // ⚡ للModal
       } else {
-        setOrderSettings(snap.val());
+        const data = snap.val();
+        setSettings(data);
+        setOrderSettings(data); // ⚡ للModal
       }
     };
-
     initSettings();
   }, [authOk]);
 
   // ================= LOGIN =================
   const login = async () => {
-    if (!email || !password) return alert("أدخل البريد وكلمة المرور");
+    if (!email || !password) {
+      setToast("أدخل البريد وكلمة المرور");
+      setTimeout(() => setToast(""), 3000);
+      return;
+    }
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      setToast("تم تسجيل الدخول بنجاح ✅");
+      setTimeout(() => setToast(""), 3000);
     } catch {
-      alert("بيانات الدخول غير صحيحة");
+      setToast("بيانات الدخول غير صحيحة");
+      setTimeout(() => setToast(""), 3000);
     }
   };
 
@@ -128,8 +151,8 @@ export default function Admin() {
       await sendPasswordResetEmail(auth, resetEmail);
       setResetMessage("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك!");
     } catch (err: any) {
-      console.error(err);
-      setResetMessage(err.message);
+      setToast(err.message);
+      setTimeout(() => setToast(""), 3000);
     }
   };
 
@@ -137,6 +160,8 @@ export default function Admin() {
   const logout = async () => {
     await signOut(auth);
     setPopup({ type: null });
+    setToast("تم تسجيل الخروج بنجاح ✅");
+    setTimeout(() => setToast(""), 3000);
   };
 
   // ================= CATEGORY =================
@@ -205,22 +230,27 @@ export default function Admin() {
     setToast("  تم التعديل بنجاح ✅");
     setTimeout(() => setToast(""), 4000);
   };
-
   // ================= EXPORT EXCEL =================
   const exportToExcel = async () => {
     if (!categories || !items) {
       alert("البيانات لم يتم تحميلها بعد!");
       return;
     }
+
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Items");
+
     sheet.columns = [
       { header: "الاسم", key: "name", width: 30 },
       { header: "السعر", key: "price", width: 15 },
       { header: "سعر TW", key: "priceTw", width: 15 },
       { header: "القسم", key: "categoryName", width: 30 },
       { header: "المكونات", key: "ingredients", width: 40 },
+      { header: "متوفر", key: "visible", width: 10 },
+      { header: "مميزة", key: "star", width: 10 },
+      { header: "صورة", key: "image", width: 25 },
     ];
+
     Object.values(items).forEach((item: any) => {
       const categoryName = categories[item.categoryId]?.name ?? "غير محدد";
       sheet.addRow({
@@ -229,66 +259,87 @@ export default function Admin() {
         priceTw: item.priceTw || "",
         categoryName,
         ingredients: item.ingredients || "",
+        visible: item.visible ? "نعم" : "لا",
+        star: item.star ? "⭐" : "",
+        image: item.image || "",
       });
     });
+
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
     saveAs(blob, "hamada-menu.xlsx");
+
+    setToast("تم تصدير البيانات بنجاح ✅");
+    setTimeout(() => setToast(""), 3000);
   };
 
   // ================= IMPORT EXCEL =================
   const importFromExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setLoading(true);
     try {
       const workbook = new ExcelJS.Workbook();
       const buffer = await file.arrayBuffer();
       await workbook.xlsx.load(buffer);
+
       const sheet = workbook.getWorksheet(1);
       if (!sheet) {
-        setToast("ملف غير صالح");
+        setToast("ملف غير صالح ❌");
         setLoading(false);
         return;
       }
+
       const categoryMap: Record<string, string> = {};
       Object.entries(categories).forEach(([id, cat]: any) => {
         categoryMap[cat.name.trim().toLowerCase()] = id;
       });
+
       const rows: any[] = [];
       sheet.eachRow((row, index) => {
-        if (index === 1) return;
+        if (index === 1) return; // تجاهل رأس الجدول
         rows.push({
           name: row.getCell(1).value?.toString().trim() || "",
           price: row.getCell(2).value?.toString().trim() || "",
           priceTw: row.getCell(3).value?.toString().trim() || "",
           categoryName: row.getCell(4).value?.toString().trim() || "",
           ingredients: row.getCell(5).value?.toString().trim() || "",
+          visible: row.getCell(6).value?.toString().trim().toLowerCase() === "نعم",
+          star: row.getCell(7).value?.toString().trim() === "⭐",
+          image: row.getCell(8).value?.toString().trim() || "",
         });
       });
+
       let addedCount = 0;
       for (const item of rows) {
         if (!item.name || !item.categoryName) continue;
         const categoryId = categoryMap[item.categoryName.toLowerCase()];
         if (!categoryId) continue;
+
         const exists = Object.values(items).some(
           (i: any) =>
             i.name.trim().toLowerCase() === item.name.toLowerCase() &&
             i.categoryId === categoryId
         );
         if (exists) continue;
+
         await push(ref(db, "items"), {
           name: item.name,
           price: item.price,
           priceTw: item.priceTw || "",
           categoryId,
           ingredients: item.ingredients || "",
+          visible: item.visible ?? true,
+          star: item.star ?? false,
+          featured: item.featured || "",
           createdAt: Date.now(),
         });
         addedCount++;
       }
+
       if (addedCount > 0) setToast(`تم إضافة ${addedCount} صنف جديد ✅`);
       else setToast("القائمة محدثة بالفعل ✅");
     } catch (err) {
@@ -301,28 +352,87 @@ export default function Admin() {
     }
   };
 
+
   // ================= EXPORT JSON =================
   const exportToJSON = () => {
+    // بناء بيانات JSON بشكل مرتب
     const data = {
-      categories: categories,
-      items: items,
+      categories,
+      items,
+      settings: {
+        orderSystem: settings.orderSystem,
+        orderSettings: {
+          inRestaurant: settings.orderSettings.inRestaurant,
+          takeaway: settings.orderSettings.takeaway,
+          inPhone: settings.orderSettings.inPhone,
+          outPhone: settings.orderSettings.outPhone,
+        },
+        complaintsWhatsapp: settings.complaintsWhatsapp,
+        footerInfo: {
+          address: settings.footerInfo.address || "",
+          phone: settings.footerInfo.phone || "",
+          whatsapp: settings.footerInfo.whatsapp || "",
+          facebook: settings.footerInfo.facebook || "",
+          instagram: settings.footerInfo.instagram || "",
+          tiktok: settings.footerInfo.tiktok || "",
+        },
+      },
       meta: { version: "1.0", exportedAt: Date.now() },
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "data.json";
+    a.download = "menu.json";
     a.click();
     URL.revokeObjectURL(url);
-    setToast("📦 تم تصدير ملف JSON بنجاح");
+
+    setToast("📦 تم تصدير جميع البيانات والإعدادات بنجاح");
     setTimeout(() => setToast(""), 4000);
   };
+
+
+
+
+
+  // ================= SAVE ORDER SETTINGS =================
+  const handleSaveOrderSettings = async (newSettings: any) => {
+    try {
+      setLoading(true);
+
+      // تحديث Firebase
+      await update(ref(db, "settings"), newSettings);
+
+      // تحديث الـ state محلياً
+      setSettings(newSettings);
+      setOrderSettings(newSettings);
+
+      setToast("تم حفظ إعدادات الطلب بنجاح ✅");
+      setShowOrderSettings(false);
+      setTimeout(() => setToast(""), 3000);
+    } catch (err) {
+      console.error(err);
+      setToast("حدث خطأ أثناء الحفظ ❌");
+      setTimeout(() => setToast(""), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   // ================= LOGIN UI =================
   if (!authOk) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#231F20]" dir="rtl">
+        {toast && (
+          <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#FDB143] text-white px-6 py-3 rounded-xl shadow-lg transition-all">
+            {toast}
+          </div>
+        )}
         {/* POPUP إعادة تعيين كلمة المرور */}
         {resetPasswordPopup && (
           <div className="fixed inset-0 bg-[#231F20]/80 flex justify-center items-center z-50 ">
@@ -371,6 +481,11 @@ export default function Admin() {
             className="bg-white p-6 rounded-3xl w-full max-w-xs border-4 flex flex-col items-center"
             style={{ borderColor: "#FDB143" }}
           >
+            {toast && (
+              <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#FDB143] text-white px-6 py-3 rounded-xl shadow-lg transition-all">
+                {toast}
+              </div>
+            )}
             {/* الشعار */}
             <div className="mb-4">
               <img src="/hamada.png" alt="Logo" className="w-24 h-24 object-contain" />
@@ -411,7 +526,7 @@ export default function Admin() {
 
   // ================= ADMIN PANEL =================
   return (
-    <div className="min-h-screen w-full bg-[#231F20] flex justify-center py-5 md:p-6" dir="rtl">
+    <div className="min-h-screen w-full bg-[url('/bg4.jpg')] flex justify-center py-5 md:p-6" dir="rtl">
       {toast && (
         <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#FDB143] text-white px-6 py-3 rounded-xl shadow-lg transition-all">
           {toast}
@@ -526,6 +641,8 @@ export default function Admin() {
       {showOrderSettings && orderSettings && (
         <OrderSettingsModal
           setShowOrderSettings={setShowOrderSettings}
+          orderSettings={orderSettings} // ⚡ الآن تمرر كل الإعدادات
+          onSave={handleSaveOrderSettings}
         />
       )}
     </div>
