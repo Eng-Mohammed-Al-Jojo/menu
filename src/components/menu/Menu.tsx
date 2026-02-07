@@ -193,13 +193,52 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
 
   const availableCategories = categories.filter((cat) => cat.available);
 
-  if (loading)
+  /* loading Page */
+  if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[url('/bg.jpg')] bg-cover">
-        <div className="absolute inset-0 bg-black/40" />
-        <p className="text-white text-2xl">تحميل...</p>
+      <div className="fixed inset-0 z-9999 flex items-center justify-center
+                  bg-black overflow-hidden">
+
+        {/* خلفية خفيفة متحركة */}
+        <div className="absolute inset-0 bg-[#a70a05]/10 blur-2xl animate-bg-pulse" />
+
+        {/* المحتوى */}
+        <div className="relative z-10 flex flex-col items-center gap-8 animate-loader-fade">
+
+          {/* اللوجو */}
+          <div className="relative">
+            {/* Halo */}
+            <div className="absolute inset-[-20px] rounded-full
+                        bg-[#a70a05]/30 blur-2xl animate-halo" />
+
+            {/* Logo container */}
+            <div className="w-32 h-32 rounded-full
+                        bg-linear-to-br from-[#a70a05] to-[#7d0703]
+                        flex items-center justify-center
+                        shadow-2xl shadow-black/70
+                        animate-logo-float">
+              <img
+                src="/logo.png"
+                alt="Restaurant Logo"
+                className="w-20 h-20 object-contain"
+              />
+            </div>
+          </div>
+
+          {/* Loader */}
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FDB143] animate-dot-1" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FDB143] animate-dot-2" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FDB143] animate-dot-3" />
+          </div>
+
+        </div>
       </div>
     );
+
+  }
+
+
 
   return (
     <main className="max-w-4xl mx-auto px-0 pb-10 font-[Alamiri] text-[#F5F8F7]">
@@ -220,6 +259,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
         keyboard={{ enabled: true }}
         spaceBetween={50}
         slidesPerView={1}
+
 
       >
         {availableCategories.map((cat) => {

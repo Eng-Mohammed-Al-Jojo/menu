@@ -321,3 +321,100 @@ body {
 .animate-toast-show {
   animation: toastShow 0.3s ease-out both;
 }
+
+
+
+@keyframes loaderFade {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes logoFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes haloPulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes bgPulse {
+
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes dot {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+}
+
+.animate-loader-fade {
+  animation: loaderFade 0.4s ease-out both;
+}
+
+.animate-logo-float {
+  animation: logoFloat 2.8s ease-in-out infinite;
+}
+
+.animate-halo {
+  animation: haloPulse 3s ease-in-out infinite;
+}
+
+.animate-bg-pulse {
+  animation: bgPulse 4s ease-in-out infinite;
+}
+
+.animate-dot-1 {
+  animation: dot 1.4s infinite;
+}
+
+.animate-dot-2 {
+  animation: dot 1.4s infinite 0.2s;
+}
+
+.animate-dot-3 {
+  animation: dot 1.4s infinite 0.4s;
+}
