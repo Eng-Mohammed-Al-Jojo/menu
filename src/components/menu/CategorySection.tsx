@@ -23,10 +23,10 @@ export default function CategorySection({ category, items, orderSystem }: Props)
         <span className="flex-1 h-px bg-linear-to-r from-transparent via-[#a62303]/70 to-transparent"></span>
       </div>
 
-      {/* Scrollable الأصناف أفقياً */}
-      <div className="flex flex-col gap-6">
+      {/* الأصناف */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {items.map((item) => (
-          <div key={item.id} className="shrink-0 w-full md:w-full">
+          <div key={item.id} className="w-full">
             <ItemRow item={item} orderSystem={orderSystem} />
           </div>
         ))}

@@ -17,7 +17,6 @@ export default function ItemRow({ item, orderSystem }: Props) {
   const [showToast, setShowToast] = useState(false);
 
   const hasIngredients = !!item.ingredients;
-  const hasImage = !!item.image;
 
   const handleAdd = (price: number) => {
     addItem(item, price);
@@ -33,60 +32,63 @@ export default function ItemRow({ item, orderSystem }: Props) {
   return (
     <div
       className={`
-        relative w-full
-        animate-item-enter
+        relative w-full h-full
         ${unavailable ? "opacity-60" : ""}
       `}
     >
       {/* ===== Card ===== */}
       <div
         className={`
-          relative flex gap-4 p-4 sm:p-5 rounded-3xl
+          relative flex flex-col h-full
+          rounded-3xl overflow-hidden
           bg-linear-to-br from-white/90 to-white/95
           border ${unavailable ? "border-gray-400/40" : "border-[#a70a05]/40"}
-          transition-all duration-300
-          active:scale-[0.98] md:hover:scale-[1.01]
-          shadow-md md:hover:shadow-xl
-          font-[Almarai] font-bold hover:scale-105
+          shadow-md transition-all duration-300
+          active:scale-[0.98]
+          font-[Almarai] font-bold
         `}
       >
-        {/* Glow */}
-        {!unavailable && (
-          <div className="absolute -inset-1 rounded-3xl bg-linear-to-r from-[#FDB143]/10 via-[#FFD369]/20 to-[#FDB143]/10 blur-xl opacity-40 pointer-events-none" />
-        )}
-
-
+        {/* ===== Image ===== */}
+        <div className="w-full h-32 sm:h-36 bg-black/20 overflow-hidden">
+          <img
+            src={item.image ? `/images/${item.image}` : "/logo.png"}
+            alt={item.name}
+            loading="lazy"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "/logo.png";
+            }}
+          />
+        </div>/ // /
 
         {/* ===== Content ===== */}
-        <div className="flex flex-col justify-between flex-1 min-w-0 z-10">
-          {/* Name + ingredients */}
-          <div>
-            <h3
+        <div className="p-3 flex flex-col gap-2 flex-1">
+          {/* Name */}
+          <h3
+            className={`
+              text-sm sm:text-base font-extrabold leading-snug
+              ${unavailable
+                ? "line-through text-gray-300"
+                : "text-[#a70a05]"}
+            `}
+          >
+            {item.name}
+          </h3>
+
+          {/* Ingredients */}
+          {hasIngredients && (
+            <p
               className={`
-                text-lg sm:text-xl md:text-2xl font-extrabold
-                leading-snug
-                ${unavailable
-                  ? "line-through text-gray-300"
-                  : "text-[#a70a05]"}
+                text-[11px] sm:text-xs text-black/70 line-clamp-2
+                ${unavailable ? "line-through" : ""}
               `}
             >
-              {item.name}
-            </h3>
+              {item.ingredients}
+            </p>
+          )}
 
-            {hasIngredients && (
-              <p
-                className={`
-                  mt-1 text-xs sm:text-sm text-black/80
-                  ${unavailable ? "line-through" : ""}
-                `}
-              >
-                {item.ingredients}
-              </p>
-            )}
-          </div>
-
-          {/* ===== Price + Order ===== */}
-          <div className="mt-3 flex flex-wrap gap-2">
+          {/* ===== Prices + Add ===== */}
+          <div className="mt-auto flex flex-col gap-2">
             {prices.map((p) => {
               const price = Number(p.trim());
               const isAdded = addedPrice === price;
@@ -95,26 +97,17 @@ export default function ItemRow({ item, orderSystem }: Props) {
                 <div
                   key={price}
                   className={`
-                    flex items-center gap-2 px-3 py-2
-                    rounded-xl
-                    bg-white/60 backdrop-blur-sm
-                    border border-[#FDB143]/30
-                    transition-all duration-300
-                    active:scale-95
+                    flex items-center justify-between
+                    px-2 py-1.5 rounded-xl
+                    bg-white/80 border border-[#FDB143]/30
+                    transition
                     ${unavailable ? "opacity-50 line-through" : ""}
                   `}
                 >
-                  {/* Price */}
-                  <span
-                    className={`
-                      text-sm sm:text-base font-extrabold
-                      ${unavailable ? "text-gray-300" : "text-[#a70a05]"}
-                    `}
-                  >
+                  <span className="text-sm font-extrabold text-[#a70a05]">
                     {price}₪
                   </span>
 
-                  {/* Button */}
                   {orderSystem && !unavailable && (
                     <button
                       onClick={() => handleAdd(price)}
@@ -125,7 +118,8 @@ export default function ItemRow({ item, orderSystem }: Props) {
                         active:scale-90
                         ${isAdded
                           ? "bg-[#a70a05]"
-                          : "bg-[#a70a05]/90 hover:scale-110"}
+                          : "bg-[#a70a05]/90 hover:scale-110"
+                        }
                       `}
                     >
                       {isAdded ? (
@@ -136,44 +130,21 @@ export default function ItemRow({ item, orderSystem }: Props) {
                     </button>
                   )}
                 </div>
-
-
               );
             })}
           </div>
         </div>
-        {/* ===== Image ===== */}
-        {hasImage && (
-          <div
-            className="
-              w-24 h-24 sm:w-28 sm:h-28
-              rounded-2xl overflow-hidden shrink-0
-              border border-[#FDB143]/40
-              bg-black/30
-              animate-image-pop
-              z-10
-            "
-          >
-            <img
-              src={`/images/${item.image}`}
-              alt={item.name}
-              loading="lazy"
-              className="w-full h-full object-cover"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          </div>
-        )}
       </div>
 
       {/* ===== Toast ===== */}
       {showToast && (
         <div
           className="
-            absolute top-1/2 left-1/2
-            -translate-x-1/2 -translate-y-full
+            absolute top-2 left-1/2
+            -translate-x-1/2
             bg-[#a70a05]
             text-white font-bold
-            px-4 py-2 rounded-2xl
+            px-3 py-1.5 rounded-xl
             shadow-lg
             flex items-center gap-2
             animate-toast-show
@@ -182,7 +153,7 @@ export default function ItemRow({ item, orderSystem }: Props) {
           "
         >
           <FaCheck className="w-4 h-4" />
-          <span className="text-sm">تمت إضافة الصنف</span>
+          <span className="text-xs">تمت الإضافة</span>
         </div>
       )}
     </div>
