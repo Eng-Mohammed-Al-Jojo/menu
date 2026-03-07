@@ -1,6 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiCheck, FiImage } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     visible: boolean;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const FeaturedGallery: React.FC<Props> = ({ visible, onClose, onSelect, galleryImages, selectedImage }) => {
+    const { t } = useTranslation();
     return (
         <AnimatePresence>
             {visible && (
@@ -38,8 +40,8 @@ const FeaturedGallery: React.FC<Props> = ({ visible, onClose, onSelect, galleryI
                                     <FiImage />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-black text-(--text-main)">معرض الصور</h2>
-                                    <p className="text-(--text-muted) text-[10px] uppercase tracking-widest font-bold">Select Product Image</p>
+                                    <h2 className="text-xl font-black text-(--text-main)">{t('admin.gallery_title')}</h2>
+                                    <p className="text-(--text-muted) text-[10px] uppercase tracking-widest font-bold">{t('admin.select_image_desc')}</p>
                                 </div>
                             </div>
                             <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-(--bg-main) text-(--text-muted) hover:text-red-500 transition-all border border-(--border-color)">
@@ -94,7 +96,7 @@ const FeaturedGallery: React.FC<Props> = ({ visible, onClose, onSelect, galleryI
                                 onClick={onClose}
                                 className="w-full py-4 rounded-2xl bg-(--bg-main) text-(--text-muted) font-black border border-(--border-color) hover:bg-(--bg-card) transition-all"
                             >
-                                إغلاق المعرض
+                                {t('admin.close_gallery')}
                             </button>
                         </div>
                     </motion.div>

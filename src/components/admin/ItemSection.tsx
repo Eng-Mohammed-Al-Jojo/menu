@@ -3,6 +3,7 @@ import { ref, push, update } from "firebase/database";
 import { db } from "../../firebase";
 import { FiEdit, FiTrash2, FiPlus, FiSearch, FiChevronDown, FiStar, FiImage, FiMinus } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import type { PopupState, Category, Item } from "./types";
 import FeaturedGallery from "./FeaturedGallery";
 import CustomSelect from "./CustomSelect";
@@ -20,6 +21,7 @@ interface Props {
 }
 
 const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
+  const { t, i18n } = useTranslation();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = useState("");
   const [itemNameAr, setItemNameAr] = useState("");
@@ -115,11 +117,11 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
   return (
     <div className="space-y-8">
       {/* Search Bar */}
-      <div className="relative group">
-        <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-(--text-muted) group-focus-within:text-primary transition-colors text-xl" />
+      <div className="relative group px-2">
+        <FiSearch className={`absolute ${i18n.language === 'ar' ? 'right-6' : 'left-6'} top-1/2 -translate-y-1/2 text-(--text-muted) group-focus-within:text-primary transition-colors text-xl`} />
         <input
-          className="w-full bg-(--bg-card) border border-(--border-color) rounded-3xl py-4 pl-14 pr-6 text-base font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-premium"
-          placeholder="إبحث عن صنف، قسم، أو سعر..."
+          className={`w-full bg-(--bg-card) border border-(--border-color) rounded-3xl py-4 ${i18n.language === 'ar' ? 'pr-14 pl-6' : 'pl-14 pr-6'} text-sm sm:text-base font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-premium`}
+          placeholder={t('admin.search_placeholder')}
           value={quickSearch}
           onChange={(e) => setQuickSearch(e.target.value)}
         />
@@ -135,8 +137,8 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
               <FiPlus />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-(--text-main)">إضافة صنف جديد</h2>
-              <p className="text-(--text-muted) text-sm font-medium">أدخل تفاصيل الطبق الجديد لإضافته للمنيو</p>
+              <h2 className="text-xl sm:text-2xl font-black text-(--text-main)">{t('admin.add_new_item')}</h2>
+              <p className="text-(--text-muted) text-[10px] sm:text-sm font-medium">{t('admin.item_details_desc')}</p>
             </div>
           </div>
 
@@ -146,44 +148,37 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
               onClick={() => setFormLang("ar")}
               className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${formLang === "ar" ? "bg-primary text-white shadow-md" : "text-(--text-muted) hover:text-primary"}`}
             >
-              العربية (AR)
+              {t('common.arabic_short')}
             </button>
             <button
               onClick={() => setFormLang("en")}
               className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${formLang === "en" ? "bg-primary text-white shadow-md" : "text-(--text-muted) hover:text-primary"}`}
             >
-              English (EN)
+              {t('common.english_short')}
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-black uppercase tracking-widest text-(--text-muted) mr-2">القسم</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-(--text-muted) px-2">{t('admin.categories')}</label>
             <CustomSelect
-              options={Object.keys(categories).map(id => ({ id, name: categories[id].name }))}
+              options={Object.keys(categories).map(id => ({ id, name: (i18n.language === 'ar' ? categories[id].nameAr : categories[id].nameEn) || categories[id].name || "" }))}
               value={selectedCategory}
               onChange={(val) => { setSelectedCategory(val); setSelectedCategoryError(false); }}
               error={selectedCategoryError}
-              placeholder="اختر القسم..."
+              placeholder={t('admin.select_category')}
             />
-            <AnimatePresence>
-              {selectedCategoryError && (
-                <motion.span initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="text-xs text-red-500 font-bold mr-2">
-                  الرجاء اختيار قسم
-                </motion.span>
-              )}
-            </AnimatePresence>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-black uppercase tracking-widest text-(--text-muted) mr-2">
-              {formLang === "ar" ? "اسم الصنف (بالعربية)" : "Item Name (English)"}
+            <label className="text-[10px] font-black uppercase tracking-widest text-(--text-muted) px-2">
+              {formLang === "ar" ? t('common.name') + " (" + t('common.arabic_short') + ")" : t('common.name') + " (" + t('common.english_short') + ")"}
             </label>
             <input
               className={`w-full bg-(--bg-main) border px-5 py-3 rounded-2xl text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all
                 ${itemNameError ? "border-red-500" : "border-(--border-color)"}`}
-              placeholder={formLang === "ar" ? "مثل: بيتزا مارجريتا" : "e.g., Margherita Pizza"}
+              placeholder={formLang === "ar" ? t('admin.item_name_ar_placeholder') : t('admin.item_name_en_placeholder')}
               value={formLang === "ar" ? itemNameAr : itemNameEn}
               onChange={(e) => {
                 if (formLang === "ar") setItemNameAr(e.target.value);
@@ -191,22 +186,15 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                 setItemNameError(false);
               }}
             />
-            <AnimatePresence>
-              {itemNameError && (
-                <motion.span initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="text-xs text-red-500 font-bold mr-2">
-                  الرجاء إدخال اسم الصنف
-                </motion.span>
-              )}
-            </AnimatePresence>
           </div>
 
           <div className="flex flex-col gap-2 md:col-span-2">
-            <label className="text-xs font-black uppercase tracking-widest text-(--text-muted) mr-2">
-              {formLang === "ar" ? "المكونات أو الوصف (بالعربية)" : "Ingredients or Description (English)"}
+            <label className="text-[10px] font-black uppercase tracking-widest text-(--text-muted) px-2">
+              {t('admin.ingredients_label')}
             </label>
             <input
               className="w-full bg-(--bg-main) border border-(--border-color) px-5 py-3 rounded-2xl text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all"
-              placeholder={formLang === "ar" ? "وصف مختصر للطبق..." : "Short description..."}
+              placeholder={t('admin.ingredients_placeholder')}
               value={formLang === "ar" ? itemIngredientsAr : itemIngredientsEn}
               onChange={(e) => {
                 if (formLang === "ar") setItemIngredientsAr(e.target.value);
@@ -216,30 +204,23 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-black uppercase tracking-widest text-(--text-muted) mr-2">الأسعار</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-(--text-muted) px-2">{t('common.total')}</label>
             <input
               className={`w-full bg-(--bg-main) border px-5 py-3 rounded-2xl text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all
                 ${itemPriceError ? "border-red-500" : "border-(--border-color)"}`}
-              placeholder="مثال: 50, 40 (افصل بفاصلة لعدة أحجام)"
+              placeholder={t('admin.item_price_placeholder')}
               value={itemPrice}
               onChange={(e) => { setItemPrice(e.target.value); setItemPriceError(false); }}
             />
-            <AnimatePresence>
-              {itemPriceError && (
-                <motion.span initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="text-xs text-red-500 font-bold mr-2">
-                  الرجاء إدخال أسعار صحيحة مفصولة بفواصل
-                </motion.span>
-              )}
-            </AnimatePresence>
           </div>
 
           <div className="flex items-end">
             <button
               onClick={addItem}
-              className="w-full h-[52px] bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+              className="w-full h-[52px] bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-3"
             >
               <FiPlus className="text-xl" />
-              إضافة الصنف للمنيو
+              {t('admin.add_item_btn')}
             </button>
           </div>
         </div>
@@ -255,8 +236,8 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
             >
               <div className="text-center text-white">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">✅</div>
-                <h3 className="text-2xl font-black">تمت الإضافة بنجاح</h3>
-                <p className="opacity-80 font-bold mt-1 uppercase tracking-widest text-xs">Menu updated successfully</p>
+                <h3 className="text-2xl font-black">{t('admin.item_added_success_title')}</h3>
+                <p className="opacity-80 font-bold mt-1 uppercase tracking-widest text-xs">{t('admin.item_added_success_desc')}</p>
               </div>
             </motion.div>
           )}
@@ -273,9 +254,11 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
               .filter(item => item.categoryId === catId)
               .filter(item => {
                 const search = quickSearch.toLowerCase();
+                const itemName = i18n.language === 'ar' ? item.nameAr : item.nameEn;
+                const itemIngredients = i18n.language === 'ar' ? item.ingredientsAr : item.ingredientsEn;
                 return (
-                  item.name.toLowerCase().includes(search) ||
-                  cat.name.toLowerCase().includes(search) ||
+                  (itemName && itemName.toLowerCase().includes(search)) ||
+                  (itemIngredients && itemIngredients.toLowerCase().includes(search)) ||
                   String(item.price).includes(search)
                 );
               });
@@ -295,8 +278,8 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                       <FiChevronDown className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-(--text-main)">{cat.name}</h3>
-                      <p className="text-(--text-muted) text-xs font-bold uppercase tracking-widest mt-0.5">{catItems.length} {catItems.length === 1 ? 'Item' : 'Items'}</p>
+                      <h3 className="text-xl font-black text-(--text-main)">{i18n.language === 'ar' ? cat.nameAr : cat.nameEn}</h3>
+                      <p className="text-(--text-muted) text-xs font-bold uppercase tracking-widest mt-0.5">{catItems.length} {t('admin.items_count', { count: catItems.length })}</p>
                     </div>
                   </div>
                 </button>
@@ -341,7 +324,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                                   className="w-20 h-20 bg-(--bg-main) border-2 border-dashed border-(--border-color) rounded-2xl flex flex-col items-center justify-center text-(--text-muted) hover:text-primary hover:border-primary/50 transition-all gap-1"
                                 >
                                   <FiImage size={24} />
-                                  <span className="text-[10px] font-black uppercase tracking-tighter">Add</span>
+                                  <span className="text-[10px] font-black uppercase tracking-tighter">{t('common.add')}</span>
                                 </button>
                               )}
                               <button
@@ -355,10 +338,10 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                             {/* Info Part */}
                             <div className="flex-1 min-w-0 flex flex-col gap-1">
                               <div className="flex items-center gap-3">
-                                <h4 className="font-black text-lg text-(--text-main) truncate">{item.name}</h4>
+                                <h4 className="font-black text-lg text-(--text-main) truncate">{i18n.language === 'ar' ? item.nameAr : item.nameEn}</h4>
                                 {item.star && <FiStar className="text-yellow-400 fill-yellow-400" size={16} />}
                               </div>
-                              {item.ingredients && <p className="text-xs text-(--text-muted) font-medium line-clamp-1">{item.ingredients}</p>}
+                              {(item.ingredientsAr || item.ingredientsEn) && <p className="text-xs text-(--text-muted) font-medium line-clamp-1">{i18n.language === 'ar' ? item.ingredientsAr : item.ingredientsEn}</p>}
                               <p className="text-primary font-black text-sm">{item.price} <span className="text-[10px] uppercase opacity-70">₪</span></p>
                             </div>
 
@@ -406,7 +389,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
 
                         {catItems.length === 0 && (
                           <div className="py-12 text-center">
-                            <p className="text-(--text-muted) font-bold">لا يوجد أصناف في هذا القسم حالياً</p>
+                            <p className="text-(--text-muted) font-bold">{t('admin.no_items_placeholder')}</p>
                           </div>
                         )}
                       </div>

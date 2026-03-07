@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     options: { id: string; name: string }[];
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const CustomSelect: React.FC<Props> = ({ options, value, onChange, error, placeholder }) => {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -38,7 +40,7 @@ const CustomSelect: React.FC<Props> = ({ options, value, onChange, error, placeh
                 `}
             >
                 <span className={`text-sm font-bold ${selectedOption ? "text-(--text-main)" : "text-(--text-muted)/50"}`}>
-                    {selectedOption ? selectedOption.name : placeholder || "اختر..."}
+                    {selectedOption ? selectedOption.name : placeholder || t('common.select')}
                 </span>
                 <FiChevronDown className={`transition-transform duration-300 text-(--text-muted) ${open ? "rotate-180" : ""}`} />
             </button>
@@ -53,7 +55,7 @@ const CustomSelect: React.FC<Props> = ({ options, value, onChange, error, placeh
                     >
                         <div className="overflow-y-auto max-h-64 custom-scrollbar p-2">
                             {options.length === 0 ? (
-                                <div className="p-4 text-center text-xs text-(--text-muted) font-bold">لا يوجد خيارات</div>
+                                <div className="p-4 text-center text-xs text-(--text-muted) font-bold">{t('common.no_options')}</div>
                             ) : (
                                 options.map(o => (
                                     <button

@@ -1,12 +1,14 @@
 // src/components/UploadImage.tsx
 import React, { useState } from "react";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 interface UploadImageProps {
-    onUpload: (filename: string) => void; // ترجع اسم الصورة بعد الرفع
+    onUpload: (filename: string) => void;
 }
 
 const UploadImage: React.FC<UploadImageProps> = ({ onUpload }) => {
+    const { t } = useTranslation();
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ const UploadImage: React.FC<UploadImageProps> = ({ onUpload }) => {
 
     const handleUpload = async () => {
         if (!file) {
-            setError("الرجاء اختيار صورة أولاً");
+            setError(t('admin.select_image_first'));
             return;
         }
 
@@ -35,12 +37,12 @@ const UploadImage: React.FC<UploadImageProps> = ({ onUpload }) => {
                 },
             });
 
-            onUpload(res.data.filename); // ترجع اسم الصورة للملف اللي يستدعيه
+            onUpload(res.data.filename);
             setFile(null);
             setError(null);
         } catch (err) {
             console.error(err);
-            setError("فشل رفع الصورة، حاول مرة أخرى");
+            setError(t('admin.upload_failed'));
         } finally {
             setUploading(false);
         }
@@ -54,10 +56,10 @@ const UploadImage: React.FC<UploadImageProps> = ({ onUpload }) => {
                 disabled={uploading || !file}
                 className="px-4 py-2 rounded-lg bg-[#940D11] text-white font-bold hover:bg-[#940D11]/80 disabled:opacity-50"
             >
-                {uploading ? "جاري الرفع..." : "رفع الصورة"}
+                {uploading ? t('admin.uploading') : t('admin.upload_btn')}
             </button>
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            {file && <p className="text-sm">الصورة المختارة: {file.name}</p>}
+            {file && <p className="text-sm">{t('admin.selected_image')}: {file.name}</p>}
         </div>
     );
 };

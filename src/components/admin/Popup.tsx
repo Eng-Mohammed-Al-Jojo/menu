@@ -2,6 +2,7 @@ import React from "react";
 import { type PopupState } from "./types";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiCheck, FiTrash2, FiLogOut, FiKey, FiMail, FiEdit, FiLayers, FiType, FiDollarSign, FiInfo } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   popup: PopupState;
@@ -38,8 +39,6 @@ interface Props {
   logout?: () => void;
 }
 
-import { useTranslation } from "react-i18next";
-
 const Popup: React.FC<Props> = ({
   popup,
   setPopup,
@@ -59,6 +58,7 @@ const Popup: React.FC<Props> = ({
   logout,
 }) => {
   const { t, i18n } = useTranslation();
+  const isRtl = i18n.language === 'ar';
   const [formLang, setFormLang] = React.useState<"ar" | "en">("ar");
   const isOpen = popup.type !== null || resetPasswordPopup;
   if (!isOpen) return null;
@@ -90,7 +90,7 @@ const Popup: React.FC<Props> = ({
           {/* Close Button */}
           <button
             onClick={closePopup}
-            className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-2xl bg-(--bg-main) text-(--text-muted) hover:text-primary transition-colors border border-(--border-color)"
+            className={`absolute top-6 ${isRtl ? 'left-6' : 'right-6'} w-10 h-10 flex items-center justify-center rounded-2xl bg-(--bg-main) text-(--text-muted) hover:text-primary transition-colors border border-(--border-color)`}
           >
             <FiX />
           </button>
@@ -103,15 +103,15 @@ const Popup: React.FC<Props> = ({
                   <FiLogOut />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-(--text-main)">{t('admin.logout')}?</h2>
-                  <p className="text-(--text-muted) font-medium mt-1 uppercase tracking-widest text-[10px]">Confirm Logout</p>
+                  <h2 className="text-2xl font-black text-(--text-main)">{t('admin.logout_title')}?</h2>
+                  <p className="text-(--text-muted) font-medium mt-1 uppercase tracking-widest text-[10px]">{t('admin.logout_confirm')}</p>
                 </div>
                 <div className="flex gap-4">
                   <button
                     onClick={() => { logout && logout(); closePopup(); }}
                     className="flex-1 py-4 rounded-2xl bg-red-500 text-white font-black shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all"
                   >
-                    {t('common.save')}
+                    {t('admin.logout_title')}
                   </button>
                   <button
                     onClick={closePopup}
@@ -131,7 +131,7 @@ const Popup: React.FC<Props> = ({
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-(--text-main)">
-                    {popup.type === "addCategory" ? t('admin.add_category') : t('common.delete') + ' ' + t('admin.categories')}
+                    {popup.type === "addCategory" ? t('admin.add_category_title') : t('admin.delete_category_title')}
                   </h2>
                 </div>
                 <div className="flex gap-4">
@@ -162,8 +162,8 @@ const Popup: React.FC<Props> = ({
                   <FiTrash2 />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-(--text-main)">{t('common.delete')}</h2>
-                  <p className="text-(--text-muted) font-medium mt-1">{t('common.delete')} {t('items')}?</p>
+                  <h2 className="text-2xl font-black text-(--text-main)">{t('admin.delete_item_title')}</h2>
+                  <p className="text-(--text-muted) font-medium mt-1">{t('admin.delete_item_confirm')}</p>
                 </div>
                 <div className="flex flex-col gap-3">
                   <button
@@ -191,8 +191,8 @@ const Popup: React.FC<Props> = ({
                       <FiEdit />
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-(--text-main)">تعديل المنتج</h2>
-                      <p className="text-(--text-muted) font-medium text-[10px] uppercase tracking-widest">Update Product Details</p>
+                      <h2 className="text-xl font-black text-(--text-main)">{t('admin.edit_product_title')}</h2>
+                      <p className="text-(--text-muted) font-medium text-[10px] uppercase tracking-widest">{t('admin.edit_product_desc')}</p>
                     </div>
                   </div>
 
@@ -211,23 +211,23 @@ const Popup: React.FC<Props> = ({
 
                 <div className="space-y-4">
                   <div className="relative group">
-                    <FiLayers className={`${i18n.language === 'ar' ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
+                    <FiLayers className={`${isRtl ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
                     <select
-                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${i18n.language === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all appearance-none`}
+                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${isRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all appearance-none`}
                       value={editItemValues.selectedCategory}
                       onChange={(e) => setEditItemValues({ ...editItemValues, selectedCategory: e.target.value })}
                     >
                       {Object.keys(categories).map((id) => (
-                        <option key={id} value={id}>{categories[id].name}</option>
+                        <option key={id} value={id}>{isRtl ? categories[id].nameAr || categories[id].name : categories[id].nameEn || categories[id].name}</option>
                       ))}
                     </select>
                   </div>
 
                   <div className="relative group">
-                    <FiType className={`${i18n.language === 'ar' ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
+                    <FiType className={`${isRtl ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
                     <input
-                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${i18n.language === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all`}
-                      placeholder={formLang === "ar" ? "اسم المنتج (بالعربية)" : "Product Name (English)"}
+                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${isRtl ? 'pr-11 pl-4 text-right' : 'pl-11 pr-4 text-left'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all`}
+                      placeholder={formLang === "ar" ? t('admin.product_name_ar') : t('admin.product_name_en')}
                       value={formLang === "ar" ? editItemValues.itemNameAr : editItemValues.itemNameEn}
                       onChange={(e) => {
                         if (formLang === "ar") setEditItemValues({ ...editItemValues, itemNameAr: e.target.value });
@@ -237,11 +237,11 @@ const Popup: React.FC<Props> = ({
                   </div>
 
                   <div className="relative group">
-                    <FiInfo className={`${i18n.language === 'ar' ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
+                    <FiInfo className={`${isRtl ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
                     <input
-                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${i18n.language === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all`}
-                      placeholder={formLang === "ar" ? "المكونات (بالعربية)" : "Ingredients (English)"}
-                      value={formLang === "ar" ? editItemValues.itemIngredientsAr : editItemValues.itemIngredientsEn}
+                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${isRtl ? 'pr-11 pl-4 text-right' : 'pl-11 pr-4 text-left'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all`}
+                      placeholder={formLang === "ar" ? t('admin.ingredients_ar') : t('admin.ingredients_en')}
+                      value={formLang === "ar" ? editItemValues.itemIngredientsAr || "" : editItemValues.itemIngredientsEn || ""}
                       onChange={(e) => {
                         if (formLang === "ar") setEditItemValues({ ...editItemValues, itemIngredientsAr: e.target.value });
                         else setEditItemValues({ ...editItemValues, itemIngredientsEn: e.target.value });
@@ -250,9 +250,9 @@ const Popup: React.FC<Props> = ({
                   </div>
 
                   <div className="relative group">
-                    <FiDollarSign className={`${i18n.language === 'ar' ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
+                    <FiDollarSign className={`${isRtl ? 'right-4' : 'left-4'} absolute top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
                     <input
-                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${i18n.language === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all`}
+                      className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-3 ${isRtl ? 'pr-11 pl-4 text-right' : 'pl-11 pr-4 text-left'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all`}
                       placeholder={t('common.total')}
                       value={editItemValues.itemPrice}
                       onChange={(e) => setEditItemValues({ ...editItemValues, itemPrice: e.target.value })}
@@ -265,13 +265,13 @@ const Popup: React.FC<Props> = ({
                     onClick={() => { updateItem && updateItem(); closePopup(); }}
                     className="flex-1 py-4 rounded-2xl bg-primary text-white font-black shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
-                    <FiCheck /> حفظ التعديلات
+                    <FiCheck /> {t('admin.save_edits')}
                   </button>
                   <button
                     onClick={closePopup}
                     className="px-6 py-4 rounded-2xl bg-(--bg-main) text-(--text-muted) font-black border border-(--border-color) hover:bg-(--bg-card) transition-all"
                   >
-                    إلغاء
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>
@@ -285,17 +285,17 @@ const Popup: React.FC<Props> = ({
                     <FiKey />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-(--text-main)">استعادة الحساب</h2>
-                    <p className="text-(--text-muted) font-medium mt-1">سيتم إرسال رابط إعادة التعيين لبريدك</p>
+                    <h2 className="text-2xl font-black text-(--text-main)">{t('admin.account_reset_title')}</h2>
+                    <p className="text-(--text-muted) font-medium mt-1">{t('admin.account_reset_desc')}</p>
                   </div>
                 </div>
 
                 <div className="relative group">
-                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary" />
+                  <FiMail className={`absolute ${isRtl ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-(--text-muted) transition-colors group-focus-within:text-primary`} />
                   <input
                     type="email"
-                    placeholder="البريد الإلكتروني"
-                    className="w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-4 pl-11 pr-4 text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-inner"
+                    placeholder={t('admin.email_placeholder')}
+                    className={`w-full bg-(--bg-main) border border-(--border-color) rounded-2xl py-4 ${isRtl ? 'pr-11 pl-4 text-right' : 'pl-11 pr-4 text-left'} text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-inner`}
                     value={resetEmail}
                     onChange={(e) => setResetEmail && setResetEmail(e.target.value)}
                   />
@@ -314,13 +314,13 @@ const Popup: React.FC<Props> = ({
                     onClick={handleResetPassword}
                     className="w-full py-4 rounded-2xl bg-primary text-white font-black shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                   >
-                    إرسال رابط الاستعادة
+                    {t('admin.send_reset_link')}
                   </button>
                   <button
                     onClick={closePopup}
                     className="w-full py-4 rounded-2xl bg-(--bg-main) text-(--text-muted) font-black border border-(--border-color) hover:bg-(--bg-card) transition-all"
                   >
-                    إلغاء
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>

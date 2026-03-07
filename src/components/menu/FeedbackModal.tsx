@@ -3,6 +3,7 @@ import { FiX, FiStar, FiMessageSquare, FiSend } from "react-icons/fi";
 import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     show: boolean;
@@ -12,6 +13,7 @@ interface Props {
 const LOCAL_STORAGE_KEY = "feedbackSettings";
 
 export default function FeedbackModal({ show, onClose }: Props) {
+    const { t } = useTranslation();
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [message, setMessage] = useState("");
@@ -51,22 +53,22 @@ export default function FeedbackModal({ show, onClose }: Props) {
 
     const handleSend = () => {
         if (!message.trim()) {
-            setToast("الرجاء كتابة الملاحظة ⚠️");
+            setToast(t('common.feedback_error_message'));
             setTimeout(() => setToast(null), 3000);
             return;
         }
 
         if (!feedbackPhone) {
-            setToast("⚠️ رقم الشكاوى غير متوفر حالياً");
+            setToast(t('common.feedback_error_phone'));
             setTimeout(() => setToast(null), 3000);
             return;
         }
 
-        const fullMessage = `⭐ تقييم زبون ⭐\n------------------\n🔹 الاسم: ${name || "-"}\n🔹 الجوال: ${phone || "-"}\n🔹 التقييم: ${rating}/5\n🔹 الملاحظة: ${message || "-"}`;
+        const fullMessage = `${t('whatsapp.rating_prefix')}\n------------------\n${t('whatsapp.name_prefix')}: ${name || "-"}\n${t('whatsapp.phone_prefix')}: ${phone || "-"}\n${t('whatsapp.rating_label')}: ${rating}/5\n${t('whatsapp.note_prefix')}: ${message || "-"}`;
         const url = `https://wa.me/${feedbackPhone}?text=${encodeURIComponent(fullMessage)}`;
         window.open(url, "_blank");
 
-        setToast("تم إرسال الملاحظة بنجاح ✅");
+        setToast(t('common.feedback_success'));
         setTimeout(() => setToast(null), 3000);
         onClose();
     };
@@ -99,15 +101,15 @@ export default function FeedbackModal({ show, onClose }: Props) {
                             <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-3xl mb-4 shadow-inner">
                                 <FiMessageSquare />
                             </div>
-                            <h2 className="text-2xl font-black text-(--text-main) text-center">الآراء والشكاوى</h2>
-                            <p className="text-sm font-bold text-(--text-muted) text-center mt-1 uppercase tracking-widest opacity-60">Your feedback matters</p>
+                            <h2 className="text-2xl font-black text-(--text-main) text-center">{t('common.feedback_title')}</h2>
+                            <p className="text-sm font-bold text-(--text-muted) text-center mt-1 uppercase tracking-widest opacity-60">{t('common.feedback_desc')}</p>
                         </div>
 
                         <div className="space-y-4">
                             <div className="relative">
                                 <input
                                     type="text"
-                                    placeholder="الاسم (اختياري)"
+                                    placeholder={t('common.name')}
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     className="w-full px-5 py-3.5 rounded-2xl bg-(--bg-main)/50 text-(--text-main) border border-(--border-color) focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold placeholder:opacity-50"
@@ -116,10 +118,10 @@ export default function FeedbackModal({ show, onClose }: Props) {
                             <div className="relative">
                                 <input
                                     type="tel"
-                                    placeholder="رقم الجوال (اختياري)"
+                                    placeholder={t('common.phone')}
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
-                                    className="w-full px-5 py-3.5 rounded-2xl bg-(--bg-main)/50 text-(--text-main) border border-(--border-color) focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold text-right placeholder:opacity-50"
+                                    className="w-full px-5 py-3.5 rounded-2xl bg-(--bg-main)/50 text-(--text-main) border border-(--border-color) focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold placeholder:opacity-50"
                                 />
                             </div>
 
@@ -143,7 +145,7 @@ export default function FeedbackModal({ show, onClose }: Props) {
                             </div>
 
                             <textarea
-                                placeholder="اكتب ملاحظتك هنا... *"
+                                placeholder={t('common.feedback_placeholder')}
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 className="w-full px-5 py-4 rounded-2xl bg-(--bg-main)/50 text-(--text-main) border border-(--border-color) focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold resize-none h-32 placeholder:opacity-50"
@@ -154,7 +156,7 @@ export default function FeedbackModal({ show, onClose }: Props) {
                                 className="w-full py-4 rounded-2xl bg-primary text-white font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
                             >
                                 <FiSend />
-                                إرسال الملاحظة
+                                {t('common.send_feedback')}
                             </button>
                         </div>
                     </motion.div>

@@ -248,8 +248,8 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
           </div>
 
           <div className="hidden lg:block mt-auto p-6 rounded-3xl bg-primary/5 border border-primary/10">
-            <h4 className="text-xs font-black text-primary uppercase tracking-tighter mb-2">Special Offers</h4>
-            <p className="text-[10px] text-(--text-muted) font-bold leading-relaxed">Check out our featured items for today's best recommendations!</p>
+            <h4 className="text-xs font-black text-primary uppercase tracking-tighter mb-2">{t('menu.special_offers')}</h4>
+            <p className="text-[10px] text-(--text-muted) font-bold leading-relaxed">{t('menu.special_offers_desc')}</p>
           </div>
         </div>
       </aside>
@@ -300,7 +300,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
                       🔍
                     </div>
                     <p className="text-xl font-black text-(--text-main)">{t('common.error')}</p>
-                    <p className="text-sm font-bold mt-2 uppercase tracking-widest opacity-60">No items found matching your filter</p>
+                    <p className="text-sm font-bold mt-2 uppercase tracking-widest opacity-60">{t('menu.no_results')}</p>
                     <button
                       onClick={() => setShowFeedbackModal(true)}
                       className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 mt-8"

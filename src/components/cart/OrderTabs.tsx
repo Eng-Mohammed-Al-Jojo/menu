@@ -144,14 +144,14 @@ ${list}
 💰 *${t('common.total')}:* ${totalPrice}₪
 ========================
 
-👤 *${t('common.customer_name')}:* ${form.name}
-🍽️ *${t('common.table_number')}:* ${form.table}
-📝 *${t('common.notes')}:* ${form.notes || "—"}
+👤 *${t('whatsapp.customer_name')}:* ${form.name}
+🍽️ *${t('whatsapp.table_number')}:* ${form.table}
+📝 *${t('whatsapp.notes')}:* ${form.notes || "—"}
 
-⏰ *${isRtl ? "الوقت" : "Time"}:* ${timeStr}
-📅 *${isRtl ? "التاريخ" : "Date"}:* ${dateStr}
+⏰ *${t('whatsapp.time')}:* ${timeStr}
+📅 *${t('whatsapp.date')}:* ${dateStr}
 
-💵 ${isRtl ? "الدفع عند الكاشير" : "Payment at reaching checkout"}
+💵 ${t('whatsapp.payment_cashier')}
 ========================`;
         }
 
@@ -161,15 +161,15 @@ ${list}
 ========================
 
 💰 *${t('common.total')}:* ${totalPrice}₪
-👤 *${t('common.customer_name')}:* ${form.name}
-📱 *${t('common.phone_number')}:* ${form.phone}
-🏠 *${t('common.address')}:* ${form.address}
-📝 *${t('common.notes')}:* ${form.notes || "—"}
+👤 *${t('whatsapp.customer_name')}:* ${form.name}
+📱 *${t('whatsapp.phone_number')}:* ${form.phone}
+🏠 *${t('whatsapp.address')}:* ${form.address}
+📝 *${t('whatsapp.notes')}:* ${form.notes || "—"}
 
-⏰ *${isRtl ? "الوقت" : "Time"}:* ${timeStr}
-📅 *${isRtl ? "التاريخ" : "Date"}:* ${dateStr}
+⏰ *${t('whatsapp.time')}:* ${timeStr}
+📅 *${t('whatsapp.date')}:* ${dateStr}
 
-💵 ${isRtl ? "الدفع عند الاستلام" : "Cash on delivery"}
+💵 ${t('whatsapp.payment_delivery')}
 ========================`;
     };
 

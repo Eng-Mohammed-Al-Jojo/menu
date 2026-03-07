@@ -126,15 +126,15 @@ export default function Admin() {
   // ================= ACTIONS =================
   const login = async () => {
     if (!email || !password) {
-      showNotification("أدخل البريد وكلمة المرور", 'error');
+      showNotification(t('admin.enter_email_password'), 'error');
       return;
     }
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      showNotification("أهلاً بك مجدداً! ✅");
+      showNotification(t('admin.welcome_back') + " ✅");
     } catch {
-      showNotification("بيانات الدخول غير صحيحة", 'error');
+      showNotification(t('admin.invalid_credentials'), 'error');
     } finally {
       setLoading(false);
     }
@@ -142,7 +142,7 @@ export default function Admin() {
 
   const handleResetPassword = async () => {
     if (!resetEmail.trim()) {
-      setResetMessage("أدخل البريد الإلكتروني أولاً");
+      setResetMessage(t('admin.enter_email_first'));
       return;
     }
     try {
@@ -154,14 +154,16 @@ export default function Admin() {
   };
 
   const logout = async () => {
-    await signOut(auth);
+    signOut(auth).then(() => {
+      showNotification(t('admin.logout_success') + " 👋");
+      setAuthOk(false);
+    });
     setPopup({ type: null });
-    showNotification("تم تسجيل الخروج بنجاح");
   };
 
   const addCategory = async () => {
     if (!newCategoryNameAr.trim() && !newCategoryNameEn.trim()) {
-      showNotification("⚠️ يجب إدخال اسم القسم أولاً", 'error');
+      showNotification(t('admin.category_name_required'), 'error');
       return;
     }
     const nameAr = newCategoryNameAr.trim();
@@ -172,7 +174,7 @@ export default function Admin() {
       (cat: any) => (cat.nameAr || cat.name || "").trim().toLowerCase() === nameAr.toLowerCase()
     );
     if (nameAr && exists) {
-      showNotification(`القسم "${nameAr}" موجود مسبقاً`, 'error');
+      showNotification(t('admin.category_exists', { name: nameAr }), 'error');
       return;
     }
     await push(ref(db, "categories"), {
@@ -184,7 +186,7 @@ export default function Admin() {
     setNewCategoryNameAr("");
     setNewCategoryNameEn("");
     setPopup({ type: null });
-    showNotification(`تم إضافة القسم "${mainName}" بنجاح ✅`);
+    showNotification(t('admin.category_added_success', { name: mainName }) + " ✅");
   };
 
   const deleteCategory = async (id: string) => {
@@ -193,14 +195,14 @@ export default function Admin() {
       if (items[itemId].categoryId === id) remove(ref(db, `items/${itemId}`));
     });
     setPopup({ type: null });
-    showNotification("تم حذف القسم بنجاح ✅");
+    showNotification(t('admin.category_deleted_success') + " ✅");
   };
 
   const deleteItem = async () => {
     if (!popup.id) return;
     await remove(ref(db, `items/${popup.id}`));
     setPopup({ type: null });
-    showNotification("تم حذف الصنف بنجاح ✅");
+    showNotification(t('admin.item_deleted_success'));
   };
 
   const updateItem = async () => {
@@ -222,7 +224,7 @@ export default function Admin() {
       itemNameAr: "", itemNameEn: "", itemPrice: "", priceTw: "",
       selectedCategory: "", itemIngredientsAr: "", itemIngredientsEn: ""
     });
-    showNotification("تم التعديل بنجاح ✅");
+    showNotification(t('common.success') + " ✅");
   };
 
   // ================= EXCEL/BACKUP =================
@@ -231,33 +233,36 @@ export default function Admin() {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Items");
     sheet.columns = [
-      { header: "الاسم", key: "name", width: 30 },
-      { header: "السعر", key: "price", width: 15 },
-      { header: "سعر TW", key: "priceTw", width: 15 },
-      { header: "القسم", key: "categoryName", width: 30 },
-      { header: "المكونات", key: "ingredients", width: 40 },
-      { header: "متوفر", key: "visible", width: 10 },
-      { header: "مميزة", key: "star", width: 10 },
-      { header: "صورة", key: "image", width: 25 },
+      { header: t('admin.excel_name'), key: "name", width: 30 },
+      { header: t('admin.excel_price'), key: "price", width: 15 },
+      { header: t('admin.excel_price_tw'), key: "priceTw", width: 15 },
+      { header: t('admin.excel_category'), key: "categoryName", width: 30 },
+      { header: t('admin.excel_ingredients'), key: "ingredients", width: 40 },
+      { header: t('admin.excel_available'), key: "visible", width: 10 },
+      { header: t('admin.excel_featured'), key: "star", width: 10 },
+      { header: t('admin.excel_image'), key: "image", width: 25 },
     ];
     Object.values(items).forEach((item: any) => {
       sheet.addRow({
-        name: item.name, price: item.price, priceTw: item.priceTw || "",
-        categoryName: categories[item.categoryId]?.name ?? "غير محدد",
-        ingredients: item.ingredients || "", visible: item.visible ? "نعم" : "لا",
+        name: i18n.language === 'ar' ? item.nameAr : item.nameEn,
+        price: item.price,
+        priceTw: item.priceTw || "",
+        categoryName: (i18n.language === 'ar' ? categories[item.categoryId]?.nameAr : categories[item.categoryId]?.nameEn) ?? t('admin.excel_not_specified'),
+        ingredients: (i18n.language === 'ar' ? item.ingredientsAr : item.ingredientsEn) || "",
+        visible: item.visible ? t('admin.excel_yes') : t('admin.excel_no'),
         star: item.star ? "⭐" : "", image: item.image || "",
       });
     });
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), "HAMADA-MENU.xlsx");
-    showNotification("تم تصدير البيانات بنجاح ✅");
+    showNotification(t('admin.export_success'));
   };
 
   const exportToJSON = () => {
     const data = { categories, items, settings, meta: { version: "1.0", exportedAt: Date.now() } };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     saveAs(blob, "menu-backup.json");
-    showNotification("📦 تم تصدير النسخة الاحتياطية بنجاح");
+    showNotification(t('admin.backup_success'));
   };
 
   // ================= LOGIN UI =================
@@ -273,14 +278,14 @@ export default function Admin() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-(--bg-card)/80 backdrop-blur-2xl p-10 rounded-[3rem] border border-(--border-color) shadow-2xl relative"
+          className="w-full max-w-md bg-(--bg-card)/80 backdrop-blur-2xl p-6 sm:p-10 rounded-[3rem] border border-(--border-color) shadow-2xl relative"
         >
           <div className="flex flex-col items-center mb-10">
-            <div className="w-24 h-24 bg-white p-2 rounded-3xl shadow-xl mb-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white p-2 rounded-3xl shadow-xl mb-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = '/hamada.png'} />
             </div>
-            <h1 className="text-3xl font-black text-(--text-main)">{t('admin.login_title')}</h1>
-            <p className="text-(--text-muted) font-bold uppercase tracking-widest text-xs mt-2">{t('admin.login_subtitle')}</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-(--text-main) text-center">{t('admin.login_title')}</h1>
+            <p className="text-(--text-muted) font-bold uppercase tracking-widest text-[10px] sm:text-xs mt-2 text-center">{t('admin.login_subtitle')}</p>
           </div>
 
           <div className="space-y-6">
@@ -357,24 +362,24 @@ export default function Admin() {
 
   // ================= ADMIN PANEL UI =================
   return (
-    <div className="min-h-screen bg-(--bg-main) flex justify-center py-10 px-4 md:px-10">
-      <div className="w-full max-w-6xl space-y-10">
+    <div className="min-h-screen bg-(--bg-main) flex justify-center py-6 sm:py-10 px-4 md:px-10">
+      <div className="w-full max-w-6xl space-y-8 sm:space-y-10">
         {/* Modern Header */}
-        <header className="bg-(--bg-card)/50 backdrop-blur-xl border border-(--border-color) p-6 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-6 shadow-premium">
-          <div className="flex items-center gap-5">
-            <div className="w-14 h-14 bg-white p-1 rounded-2xl shadow-inner border border-(--border-color)">
+        <header className="bg-(--bg-card)/50 backdrop-blur-xl border border-(--border-color) p-6 rounded-4xl flex flex-col md:flex-row justify-between items-center gap-6 shadow-premium">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white p-1 rounded-2xl shadow-inner border border-(--border-color)">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = '/hamada.png'} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-(--text-main)">{t('admin.menu_management')}</h1>
+              <h1 className="text-xl sm:text-2xl font-black text-(--text-main)">{t('admin.menu_management')}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <p className="text-(--text-muted) text-[10px] uppercase font-black tracking-widest">{t('admin.dashboard_active')}</p>
+                <p className="text-(--text-muted) text-[9px] sm:text-[10px] uppercase font-black tracking-widest">{t('admin.dashboard_active')}</p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap justify-center">
+          <div className="flex items-center gap-3 flex-wrap justify-center w-full md:w-auto">
             {/* Action Group */}
             <div className="flex items-center gap-2 bg-(--bg-main) p-1.5 rounded-2xl border border-(--border-color)">
               <button onClick={() => setShowOrderSettings(true)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-primary/10 hover:text-primary text-(--text-muted) transition-all" title={t('admin.settings')}>
@@ -394,7 +399,7 @@ export default function Admin() {
 
             <button
               onClick={() => setPopup({ type: "logout" })}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-red-50 text-red-500 font-black text-sm hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-red-50 text-red-500 font-black text-sm hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100 w-full sm:w-auto justify-center"
             >
               <FiLogOut /> {t('admin.logout')}
             </button>
@@ -403,7 +408,7 @@ export default function Admin() {
 
         <input type="file" accept=".xlsx" id="excelUpload" hidden onChange={() => {
           // Reusing existing import logic or simple handler
-          showNotification("جاري استيراد البيانات...", 'success');
+          showNotification(t('admin.importing_data'), 'success');
           // actual logic is in the original file, I should keep it for functional reasons
         }} />
 
@@ -506,10 +511,10 @@ export default function Admin() {
       await update(ref(db, "settings"), newSettings);
       setSettings(newSettings);
       setOrderSettings(newSettings);
-      showNotification("تم حفظ إعدادات الطلب بنجاح ✅");
+      showNotification(t('admin.settings_saved_success') + " ✅");
       setShowOrderSettings(false);
     } catch {
-      showNotification("حدث خطأ أثناء الحفظ ❌", 'error');
+      showNotification(t('admin.settings_save_error') + " ❌", 'error');
     } finally {
       setLoading(false);
     }
