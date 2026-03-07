@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ref, update } from "firebase/database";
 import { db } from "../../firebase";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiCheck, FiSettings, FiPhone, FiInfo, FiSmartphone, FiLayout, FiTruck, FiCoffee } from "react-icons/fi";
+import { FiX, FiCheck, FiSettings, FiInfo, FiSmartphone, FiLayout, FiTruck, FiCoffee } from "react-icons/fi";
 import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok } from "react-icons/fa";
 
 /* ================= Toast ================= */
