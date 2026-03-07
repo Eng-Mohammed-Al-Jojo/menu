@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { FiPlus, FiTrash2, FiEdit, FiCheck } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiEdit, FiCheck, FiChevronDown, FiMove } from "react-icons/fi";
 import { db } from "../../firebase";
 import { ref, update } from "firebase/database";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   DndContext,
@@ -22,38 +23,40 @@ import {
 
 import { CSS } from "@dnd-kit/utilities";
 import type { PopupState, Category } from "./types";
-import { HiChevronDown, HiOutlineArrowsUpDown } from "react-icons/hi2";
 
 interface Props {
   categories: Record<string, Category>;
   setPopup: (popup: PopupState) => void;
-  newCategoryName: string;
-  setNewCategoryName: React.Dispatch<React.SetStateAction<string>>;
+  newCategoryNameAr: string;
+  setNewCategoryNameAr: React.Dispatch<React.SetStateAction<string>>;
+  newCategoryNameEn: string;
+  setNewCategoryNameEn: React.Dispatch<React.SetStateAction<string>>;
 }
 
-/* =======================
-   العنصر القابل للسحب
-======================= */
 const SortableCategory: React.FC<{
   cat: Category & { id: string };
   editingId: string | null;
-  tempName: string;
-  setTempName: React.Dispatch<React.SetStateAction<string>>;
+  tempNameAr: string;
+  setTempNameAr: React.Dispatch<React.SetStateAction<string>>;
+  tempNameEn: string;
+  setTempNameEn: React.Dispatch<React.SetStateAction<string>>;
   saveEdit: (id: string) => void;
-  startEditing: (id: string, name: string) => void;
+  startEditing: (id: string, nameAr: string, nameEn: string) => void;
   toggleAvailability: (id: string, current: boolean) => void;
   setPopup: (popup: PopupState) => void;
 }> = ({
   cat,
   editingId,
-  tempName,
-  setTempName,
+  tempNameAr,
+  setTempNameAr,
+  tempNameEn,
+  setTempNameEn,
   saveEdit,
   startEditing,
   toggleAvailability,
   setPopup,
 }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } =
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
       useSortable({ id: cat.id });
 
     const style: React.CSSProperties = {
@@ -63,112 +66,123 @@ const SortableCategory: React.FC<{
     };
 
     return (
-      <div
+      <motion.div
         ref={setNodeRef}
         style={style}
         {...attributes}
-        className="
-        relative
-        bg-white
-        rounded-2xl
-        shadow-sm
-        flex
-        overflow-hidden
-      "
+        layout
+        className={`
+          relative group flex items-center bg-(--bg-card) rounded-2xl border transition-all duration-300 mb-3
+          ${isDragging ? "z-50 border-primary shadow-2xl scale-[1.02]" : "border-(--border-color) hover:border-primary/30 shadow-sm"}
+        `}
       >
-        {/* Drag Rail */}
+        {/* Drag Handle */}
         <div
           {...listeners}
           className="
-          cursor-grab select-none
-          bg-linear-to-b from-gray-300 to-gray-200
-          w-12 sm:w-10
-          flex items-center justify-center
-          active:scale-95
-          transition
-        "
+            cursor-grab active:cursor-grabbing p-4
+            text-(--text-muted) hover:text-primary transition-colors
+            border-r border-(--border-color)
+          "
         >
-          <HiOutlineArrowsUpDown className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+          <FiMove className="w-5 h-5" />
         </div>
 
-        {/* المحتوى */}
-        <div className="flex-1 p-2 flex flex-col gap-2">
-          {editingId === cat.id ? (
-            <div className="flex items-center gap-2">
-              <input
-                className="flex-1 p-2 border rounded-xl"
-                value={tempName}
-                onChange={(e) => setTempName(e.target.value)}
-              />
-              <button
-                onClick={() => saveEdit(cat.id)}
-                className="text-green-600 p-2"
-              >
-                <FiCheck />
-              </button>
-            </div>
-          ) : (
-            <span className="text-lg font-bold text-gray-800">
-              {cat.name}
-            </span>
-          )}
+        {/* Content */}
+        <div className="flex-1 p-4 flex items-center justify-between gap-4">
+          <div className="flex-1">
+            {editingId === cat.id ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  autoFocus
+                  className="w-full p-2 bg-(--bg-main) border border-primary rounded-xl text-sm font-bold outline-none"
+                  placeholder="الاسم بالعربية"
+                  value={tempNameAr}
+                  onChange={(e) => setTempNameAr(e.target.value)}
+                />
+                <input
+                  className="w-full p-2 bg-(--bg-main) border border-primary rounded-xl text-sm font-bold outline-none"
+                  placeholder="English Name"
+                  value={tempNameEn}
+                  onChange={(e) => setTempNameEn(e.target.value)}
+                />
+                <button
+                  onClick={() => saveEdit(cat.id)}
+                  className="w-full py-2 flex items-center justify-center rounded-xl bg-green-500 text-white shadow-lg shadow-green-500/20"
+                >
+                  <FiCheck className="ml-2" /> حفظ
+                </button>
+              </div>
+            ) : (
+              <h3 className="text-base font-black text-(--text-main)">
+                {cat.nameAr || cat.name} <span className="text-[10px] opacity-40 font-normal ml-2">({cat.nameEn || 'No EN name'})</span>
+              </h3>
+            )}
+          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => startEditing(cat.id, cat.name)}
-                className="text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition"
+                onClick={() => startEditing(cat.id, cat.nameAr || cat.name, cat.nameEn || "")}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-(--bg-main) text-(--text-muted) hover:text-primary hover:bg-primary/10 transition-all border border-(--border-color)"
               >
-                <FiEdit />
+                <FiEdit size={14} />
               </button>
 
               <button
                 onClick={() => setPopup({ type: "deleteCategory", id: cat.id })}
-                className="text-red-600 p-2 rounded-xl hover:bg-red-50 transition"
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-(--bg-main) text-(--text-muted) hover:text-red-500 hover:bg-red-50 transition-all border border-(--border-color)"
               >
-                <FiTrash2 />
+                <FiTrash2 size={14} />
               </button>
             </div>
 
             <button
               onClick={() => toggleAvailability(cat.id, cat.available ?? true)}
-              className={`relative w-14 h-7 rounded-full transition-colors
-              ${cat.available ? "bg-green-500" : "bg-gray-300"}`}
+              className={`relative w-12 h-6 rounded-full transition-all duration-300 border
+              ${cat.available ? "bg-secondary border-secondary/20" : "bg-gray-200 border-gray-300"}`}
             >
-              <span
-                className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all
-                ${cat.available ? "translate-x-7 scale-110" : ""}`}
+              <motion.span
+                animate={{ x: cat.available ? 24 : 2 }}
+                className={`absolute top-0.5 left-0 w-4.5 h-4.5 rounded-full bg-white shadow-md`}
               />
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
-/* =======================
-   CategorySection
-======================= */
 const CategorySection: React.FC<Props> = ({
   categories,
   setPopup,
-  newCategoryName,
-  setNewCategoryName,
+  newCategoryNameAr,
+  setNewCategoryNameAr,
+  newCategoryNameEn,
+  setNewCategoryNameEn,
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [tempName, setTempName] = useState("");
+  const [tempNameAr, setTempNameAr] = useState("");
+  const [tempNameEn, setTempNameEn] = useState("");
   const [openCategories, setOpenCategories] = useState(false);
+  const [formLang, setFormLang] = useState<"ar" | "en">("ar");
 
-  const startEditing = (id: string, name: string) => {
+  const startEditing = (id: string, nameAr: string, nameEn: string) => {
     setEditingId(id);
-    setTempName(name);
+    setTempNameAr(nameAr);
+    setTempNameEn(nameEn);
   };
 
   const saveEdit = async (id: string) => {
-    if (!tempName.trim()) return;
-    await update(ref(db, `categories/${id}`), { name: tempName.trim() });
+    if (!tempNameAr.trim() && !tempNameEn.trim()) return;
+    await update(ref(db, `categories/${id}`), {
+      name: tempNameAr.trim() || tempNameEn.trim(),
+      nameAr: tempNameAr.trim(),
+      nameEn: tempNameEn.trim(),
+    });
     setEditingId(null);
-    setTempName("");
+    setTempNameAr("");
+    setTempNameEn("");
   };
 
   const toggleAvailability = async (id: string, current: boolean) => {
@@ -206,95 +220,111 @@ const CategorySection: React.FC<Props> = ({
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={categoriesArray.map((c) => c.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div
-          className="bg-white p-4 rounded-3xl mb-6 border-4"
-          style={{ borderColor: "#FDB143" }}
-        >
-          <h2 className="font-bold mb-3 text-2xl">الأقسام</h2>
-
-
-
-          {/* إضافة قسم */}
-          <div className="flex gap-2 flex-wrap mb-4">
-            <input
-              className="flex-1 p-2 border rounded-xl min-w-[160px]"
-              placeholder="اسم القسم"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-            />
-            <button
-              onClick={() => setPopup({ type: "addCategory" })}
-              className="px-4 rounded-xl bg-[#FDB143] text-white hover:bg-[#FDB143]/80"
-            >
-              <FiPlus className="text-xl" />
-            </button>
-          </div>
-          {/* زر عرض الأقسام */}
-          <button
-            onClick={() => setOpenCategories((p) => !p)}
-            className="
-              w-full mb-4
-              flex items-center justify-between
-              px-4 py-3
-              bg-gray-100
-              rounded-xl
-              font-bold
-              hover:bg-gray-200
-              transition
-            "
-          >
-            <span>عرض الأقسام</span>
-
-            <div className="flex items-center gap-2">
-              <span className="bg-[#FDB143] text-white text-sm px-2 py-0.5 rounded-full">
-                {categoriesArray.length}
-              </span>
-
-              <HiChevronDown
-                className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${openCategories ? "rotate-180" : "rotate-0"
-                  }`}
-              />
-            </div>
-          </button>
-
-          {/* Accordion Animation */}
-          <div
-            className={`
-              overflow-hidden
-              transition-all duration-500 ease-in-out
-              ${openCategories
-                ? "max-h-[3000px] opacity-100 scale-100"
-                : "max-h-0 opacity-0 scale-[0.98]"}
-            `}
-          >
-            <div className="flex flex-col gap-2 pt-2">
-              {categoriesArray.map((cat) => (
-                <SortableCategory
-                  key={cat.id}
-                  cat={cat}
-                  editingId={editingId}
-                  tempName={tempName}
-                  setTempName={setTempName}
-                  saveEdit={saveEdit}
-                  startEditing={startEditing}
-                  toggleAvailability={toggleAvailability}
-                  setPopup={setPopup}
-                />
-              ))}
-            </div>
-          </div>
+    <div className="bg-(--bg-card) p-8 rounded-[2.5rem] mb-8 border border-(--border-color) shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+          <h2 className="text-2xl font-black text-primary">الأقسام</h2>
+          <p className="text-(--text-muted) text-sm font-medium mt-1">تنظيم وتصنيف قائمة الطعام</p>
         </div>
-      </SortableContext>
-    </DndContext>
+
+        {/* إضافة قسم */}
+        <div className="flex items-center gap-3 bg-(--bg-main) p-1.5 rounded-2xl border border-(--border-color) w-full md:w-auto">
+          <input
+            className="flex-1 md:w-48 bg-transparent px-4 py-2 text-sm font-bold outline-none"
+            placeholder={formLang === "ar" ? "الاسم بالعربية" : "English Name"}
+            value={formLang === "ar" ? newCategoryNameAr : newCategoryNameEn}
+            onChange={(e) => {
+              if (formLang === "ar") setNewCategoryNameAr(e.target.value);
+              else setNewCategoryNameEn(e.target.value);
+            }}
+          />
+          <button
+            onClick={() => setFormLang(p => p === "ar" ? "en" : "ar")}
+            className="px-2 py-1 text-[8px] font-black bg-white/50 rounded-lg border border-(--border-color) hover:bg-white transition-all uppercase"
+          >
+            {formLang}
+          </button>
+          <button
+            onClick={() => setPopup({ type: "addCategory" })}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+          >
+            <FiPlus size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* زر عرض الأقسام */}
+      <button
+        onClick={() => setOpenCategories((p) => !p)}
+        className="
+          w-full mb-2
+          flex items-center justify-between
+          px-6 py-4
+          bg-(--bg-main)
+          rounded-2xl
+          font-black text-(--text-main)
+          hover:bg-primary/5 hover:text-primary
+          transition-all border border-(--border-color)
+        "
+      >
+        <div className="flex items-center gap-3">
+          <span className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
+            <FiChevronDown className={`transition-transform duration-300 ${openCategories ? "rotate-180" : ""}`} />
+          </span>
+          <span>عرض جميع الأقسام</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-(--text-muted) uppercase mr-2 tracking-widest hidden sm:inline">إجمالي</span>
+          <span className="bg-primary text-white text-xs font-black px-3 py-1 rounded-lg shadow-lg shadow-primary/20">
+            {categoriesArray.length}
+          </span>
+        </div>
+      </button>
+
+      {/* Accordion List */}
+      <AnimatePresence>
+        {openCategories && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-6">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={categoriesArray.map((c) => c.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="flex flex-col">
+                    {categoriesArray.map((cat) => (
+                      <SortableCategory
+                        key={cat.id}
+                        cat={cat}
+                        editingId={editingId}
+                        tempNameAr={tempNameAr}
+                        setTempNameAr={setTempNameAr}
+                        tempNameEn={tempNameEn}
+                        setTempNameEn={setTempNameEn}
+                        saveEdit={saveEdit}
+                        startEditing={startEditing}
+                        toggleAvailability={toggleAvailability}
+                        setPopup={setPopup}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

@@ -1,101 +1,89 @@
 import { useState, useEffect } from "react";
 import { ref, update } from "firebase/database";
 import { db } from "../../firebase";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiX, FiCheck, FiSettings, FiPhone, FiInfo, FiSmartphone, FiLayout, FiTruck, FiCoffee } from "react-icons/fi";
+import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok } from "react-icons/fa";
 
 /* ================= Toast ================= */
 function Toast({ type, message }: { type: "success" | "error"; message: string }) {
     return (
-        <div
-            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50
-      px-6 py-3 rounded-xl shadow-2xl text-white text-sm font-semibold
-      ${type === "success" ? "bg-green-600" : "bg-red-600"}`}
+        <motion.div
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 50, x: "-50%" }}
+            className={`fixed bottom-10 left-1/2 z-100 px-8 py-4 rounded-2xl shadow-2xl text-white font-black flex items-center gap-3 ${type === "success" ? "bg-secondary" : "bg-red-500"}`}
         >
+            {type === "success" ? <FiCheck /> : "❌"}
             {message}
-        </div>
+        </motion.div>
     );
 }
 
-/* ================= Reusable ================= */
-const sectionClass = "bg-black/40 rounded-2xl px-4 py-3 space-y-2";
-const inputClass =
-    "w-full bg-black/60 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-gray-400 focus:ring-1 focus:ring-yellow-500";
+/* ================= Simple Components ================= */
+const inputClass = "w-full bg-(--bg-main) border border-(--border-color) rounded-2xl px-5 py-3 text-sm font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-(--text-muted)/50";
 
-/* ================= Service Checkbox ================= */
-function ServiceCheckbox({
-    title,
-    enabled,
-    onToggle,
-    value,
-    setValue,
-    disabled,
-}: any) {
+function ServiceCheckbox({ title, enabled, onToggle, value, setValue, disabled, icon: Icon }: any) {
     return (
-        <div className={sectionClass}>
-            <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                    type="checkbox"
-                    checked={enabled}
-                    onChange={onToggle}
+        <div className={`p-5 rounded-3xl border transition-all ${enabled ? "bg-primary/5 border-primary/20 shadow-inner" : "bg-(--bg-main) border-(--border-color) opacity-60"}`}>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${enabled ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-(--bg-card) text-(--text-muted)"}`}>
+                        <Icon />
+                    </div>
+                    <span className="font-black text-sm text-(--text-main)">{title}</span>
+                </div>
+                <button
+                    onClick={onToggle}
                     disabled={disabled}
-                    className="accent-green-500 w-5 h-5"
-                />
-                <span className="font-semibold text-sm">{title}</span>
-            </label>
+                    className={`relative w-12 h-6 rounded-full transition-all duration-300 border ${enabled ? "bg-green-500 border-green-500/20" : "bg-gray-300 border-gray-400"}`}
+                >
+                    <motion.span animate={{ x: enabled ? 24 : 2 }} className="absolute top-0.5 left-0 w-4.5 h-4.5 rounded-full bg-white shadow-md" />
+                </button>
+            </div>
 
-            {enabled && (
-                <input
-                    type="tel"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
-                    placeholder="رقم واتساب بدون +"
-                    className={inputClass}
-                />
-            )}
+            <AnimatePresence>
+                {enabled && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                        <div className="relative group">
+                            <FaWhatsapp className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500 transition-colors" />
+                            <input
+                                type="tel"
+                                value={value}
+                                onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
+                                placeholder="رقم واتساب الطلبات (بدون +)"
+                                className={inputClass + " pl-11"}
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
 
 /* ================= Modal ================= */
-export default function OrderSettingsModal({
-    setShowOrderSettings,
-    orderSettings: initialSettings,
-    onSave,
-}: {
-    setShowOrderSettings: (v: boolean) => void;
-    orderSettings: any;
-    onSave: (newSettings: any) => void;
-}) {
+export default function OrderSettingsModal({ setShowOrderSettings, orderSettings: initialSettings, onSave }: any) {
     const [orderSystem, setOrderSystem] = useState(true);
     const [inRestaurant, setInRestaurant] = useState(false);
     const [takeaway, setTakeaway] = useState(false);
     const [inPhone, setInPhone] = useState("");
     const [outPhone, setOutPhone] = useState("");
     const [complaintsWhatsapp, setComplaintsWhatsapp] = useState("");
-    const [footer, setFooter] = useState({
-        address: "",
-        phone: "",
-        whatsapp: "",
-        facebook: "",
-        instagram: "",
-        tiktok: "",
-    });
+    const [footer, setFooter] = useState({ address: "", phone: "", whatsapp: "", facebook: "", instagram: "", tiktok: "" });
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState<any>(null);
 
-    /* ===== Initialize state from Admin props ===== */
     useEffect(() => {
         if (!initialSettings) return;
-
         setOrderSystem(initialSettings.orderSystem ?? true);
-
         const s = initialSettings.orderSettings ?? {};
         setInRestaurant(!!s.inRestaurant);
         setTakeaway(!!s.takeaway);
         setInPhone(s.inPhone || "");
         setOutPhone(s.outPhone || "");
-
         setComplaintsWhatsapp(initialSettings.complaintsWhatsapp || "");
         setFooter(initialSettings.footerInfo || {});
         setLoading(false);
@@ -103,10 +91,9 @@ export default function OrderSettingsModal({
 
     if (loading) return null;
 
-    /* ===== Save with Validation ===== */
     const handleSave = async () => {
         if ((inRestaurant && inPhone.trim() === "") || (takeaway && outPhone.trim() === "")) {
-            setToast({ type: "error", message: "❌ الرجاء إدخال رقم واتساب لكل خدمة مفعّلة" });
+            setToast({ type: "error", message: "الرجاء إدخال رقم واتساب للخدمات المفعّلة" });
             setTimeout(() => setToast(null), 3000);
             return;
         }
@@ -121,130 +108,137 @@ export default function OrderSettingsModal({
         try {
             setSaving(true);
             await update(ref(db, "settings"), newSettings);
-
-            // 🔹 تحديث الـ state في Admin مباشرة
             onSave?.(newSettings);
-
-            setToast({ type: "success", message: "💾 تم حفظ الإعدادات بنجاح" });
-            setShowOrderSettings(false);
+            setToast({ type: "success", message: "تم حفظ الإعدادات بنجاح" });
+            setTimeout(() => setShowOrderSettings(false), 1500);
         } catch {
-            setToast({ type: "error", message: "❌ فشل الحفظ" });
-        } finally {
+            setToast({ type: "error", message: "فشل الحفظ" });
             setSaving(false);
-            setTimeout(() => setToast(null), 2000);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-3">
-            <div className="bg-[#231F20] w-full max-w-md max-h-[90vh] rounded-3xl text-[#F7F3E8] shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowOrderSettings(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative bg-(--bg-card)/80 backdrop-blur-2xl w-full max-w-lg rounded-[2.5rem] border border-(--border-color) shadow-2xl flex flex-col max-h-[90vh] overflow-hidden z-10"
+            >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                    <h2 className="text-lg font-bold">⚙️ إعدادات النظام</h2>
-                    <button onClick={() => setShowOrderSettings(false)} className="hover:text-red-400">
-                        ✖
+                <div className="p-6 border-b border-(--border-color) flex items-center justify-between bg-(--bg-main)/30">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-xl shadow-inner">
+                            <FiSettings />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-(--text-main)">إعدادات النظام</h2>
+                            <p className="text-(--text-muted) text-[10px] uppercase tracking-widest font-bold">System Configuration</p>
+                        </div>
+                    </div>
+                    <button onClick={() => setShowOrderSettings(false)} className="w-10 h-10 flex items-center justify-center rounded-2xl bg-(--bg-main) text-(--text-muted) hover:text-red-500 transition-all border border-(--border-color)">
+                        <FiX />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-                    <div className="bg-black/40 rounded-2xl px-4 py-3 flex justify-between items-center">
-                        <span className="font-semibold text-sm">تفعيل نظام الطلب</span>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                    {/* Order Module Toggle */}
+                    <div className="p-6 rounded-3xl bg-linear-to-r from-primary/5 to-transparent border border-primary/10 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner ${orderSystem ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-(--bg-card) text-(--text-muted)"}`}>
+                                <FiSmartphone />
+                            </div>
+                            <span className="font-black text-sm text-(--text-main)">تفعيل نظام الطلب عبر الويب</span>
+                        </div>
                         <button
                             onClick={() => setOrderSystem((p) => !p)}
-                            className={`w-12 h-6 rounded-full relative ${orderSystem ? "bg-green-500" : "bg-gray-600"}`}
+                            className={`relative w-14 h-7 rounded-full transition-all duration-300 border ${orderSystem ? "bg-green-500 border-green-500/20" : "bg-gray-300 border-gray-400"}`}
                         >
-                            <span
-                                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition ${orderSystem ? "right-1" : "right-6"}`}
-                            />
+                            <motion.span animate={{ x: orderSystem ? 30 : 2 }} className="absolute top-0.5 left-0 w-5.5 h-5.5 rounded-full bg-white shadow-md" />
                         </button>
                     </div>
 
-                    <ServiceCheckbox
-                        title="🍽️ الطلب داخل المطعم"
-                        enabled={inRestaurant}
-                        onToggle={() => setInRestaurant((p) => !p)}
-                        value={inPhone}
-                        setValue={setInPhone}
-                        disabled={!orderSystem}
-                    />
-
-                    <ServiceCheckbox
-                        title="🛍️ تيك أواي / دليفري"
-                        enabled={takeaway}
-                        onToggle={() => setTakeaway((p) => !p)}
-                        value={outPhone}
-                        setValue={setOutPhone}
-                        disabled={!orderSystem}
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <ServiceCheckbox
+                            title="الطلب المحلي"
+                            icon={FiCoffee}
+                            enabled={inRestaurant}
+                            onToggle={() => setInRestaurant((p) => !p)}
+                            value={inPhone}
+                            setValue={setInPhone}
+                            disabled={!orderSystem}
+                        />
+                        <ServiceCheckbox
+                            title="تيك أواي / دليفري"
+                            icon={FiTruck}
+                            enabled={takeaway}
+                            onToggle={() => setTakeaway((p) => !p)}
+                            value={outPhone}
+                            setValue={setOutPhone}
+                            disabled={!orderSystem}
+                        />
+                    </div>
 
                     {/* Complaints */}
-                    <div className="bg-linear-to-br from-red-600/30 to-black/40 rounded-2xl px-4 py-3 space-y-2">
-                        <p className="font-bold text-sm">🚨 واتساب الشكاوى والاراء</p>
+                    <div className="p-6 rounded-3xl bg-red-50/50 border border-red-100/50 space-y-4 shadow-sm group">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shadow-inner">
+                                <FiInfo />
+                            </div>
+                            <p className="font-black text-sm text-(--text-main)">واتساب الشكاوى والاراء</p>
+                        </div>
                         <input
                             value={complaintsWhatsapp}
                             onChange={(e) => setComplaintsWhatsapp(e.target.value.replace(/\D/g, ""))}
-                            placeholder="059xxxxxxx"
+                            placeholder="مثال: 059xxxxxxxx"
                             className={inputClass}
                         />
                     </div>
 
                     {/* Footer Info */}
-                    <div className={sectionClass}>
-                        <p className="font-bold text-sm flex items-center gap-2">📍 معلومات الفوتر</p>
-                        <input
-                            placeholder="📍 العنوان"
-                            value={footer.address}
-                            onChange={(e) => setFooter({ ...footer, address: e.target.value })}
-                            className={inputClass}
-                        />
-                        <input
-                            placeholder="📞 الهاتف"
-                            value={footer.phone}
-                            onChange={(e) => setFooter({ ...footer, phone: e.target.value })}
-                            className={inputClass}
-                        />
-                        <input
-                            placeholder="💬 واتساب"
-                            value={footer.whatsapp}
-                            onChange={(e) => setFooter({ ...footer, whatsapp: e.target.value })}
-                            className={inputClass}
-                        />
-                        <input
-                            placeholder="Facebook"
-                            value={footer.facebook}
-                            onChange={(e) => setFooter({ ...footer, facebook: e.target.value })}
-                            className={inputClass}
-                        />
-                        <input
-                            placeholder="Instagram"
-                            value={footer.instagram}
-                            onChange={(e) => setFooter({ ...footer, instagram: e.target.value })}
-                            className={inputClass}
-                        />
-                        <input
-                            placeholder="TikTok"
-                            value={footer.tiktok}
-                            onChange={(e) => setFooter({ ...footer, tiktok: e.target.value })}
-                            className={inputClass}
-                        />
+                    <div className="p-6 rounded-3xl bg-(--bg-main)/50 border border-(--border-color) space-y-4 shadow-sm">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-(--bg-card) text-primary flex items-center justify-center shadow-inner border border-(--border-color)">
+                                <FiLayout />
+                            </div>
+                            <p className="font-black text-sm text-(--text-main)">معلومات المذيل (Footer)</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3">
+                            <div className="relative"><FiSmartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) opacity-50" /><input placeholder="العنوان بالتفصيل" value={footer.address} onChange={(e) => setFooter({ ...footer, address: e.target.value })} className={inputClass + " pl-11"} /></div>
+                            <div className="relative"><FiSmartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) opacity-50" /><input placeholder="رقم الهاتف الأساسي" value={footer.phone} onChange={(e) => setFooter({ ...footer, phone: e.target.value })} className={inputClass + " pl-11"} /></div>
+                            <div className="relative"><FaWhatsapp className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) opacity-50" /><input placeholder="رقم واتساب التواصل" value={footer.whatsapp} onChange={(e) => setFooter({ ...footer, whatsapp: e.target.value })} className={inputClass + " pl-11"} /></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative"><FaFacebook className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) opacity-50" /><input placeholder="Facebook" value={footer.facebook} onChange={(e) => setFooter({ ...footer, facebook: e.target.value })} className={inputClass + " pl-10 text-xs"} /></div>
+                                <div className="relative"><FaInstagram className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) opacity-50" /><input placeholder="Instagram" value={footer.instagram} onChange={(e) => setFooter({ ...footer, instagram: e.target.value })} className={inputClass + " pl-10 text-xs"} /></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative"><FaTiktok className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) opacity-50" /><input placeholder="TikTok" value={footer.tiktok} onChange={(e) => setFooter({ ...footer, tiktok: e.target.value })} className={inputClass + " pl-10 text-xs"} /></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Save */}
-                <div className="px-5 py-4 border-t border-white/10">
+                {/* Footer Save */}
+                <div className="p-6 border-t border-(--border-color) bg-(--bg-main)/30">
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="w-full py-4 rounded-2xl bg-linear-to-r from-green-600 to-green-500 font-bold text-sm hover:opacity-90"
+                        className={`w-full py-4 rounded-2xl font-black text-white shadow-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 ${saving ? "bg-green-500/50 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 shadow-green-500/20"}`}
                     >
-                        {saving ? "جاري الحفظ..." : "💾 حفظ الإعدادات"}
+                        {saving ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>⚙️</motion.div> : <FiCheck />}
+                        <span>حفظ التغييرات الآن</span>
                     </button>
                 </div>
-            </div>
 
-            {toast && <Toast type={toast.type} message={toast.message} />}
+                <AnimatePresence>
+                    {toast && (
+                        <Toast type={toast.type} message={toast.message} />
+                    )}
+                </AnimatePresence>
+            </motion.div>
         </div>
     );
 }

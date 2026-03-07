@@ -16,20 +16,25 @@ export interface Category {
   id: any;
   order: number;
   name: string;
+  nameAr?: string;
+  nameEn?: string;
   createdAt: number;
   available: boolean;
-
 }
 
 export interface Item {
-  id: string;           // ✅
-  image?: string;       // ✅ صورة اختيارية (رابط)
+  id: string;
+  image?: string;
   name: string;
+  nameAr?: string;
+  nameEn?: string;
   price: string;
   priceTw?: string;
   ingredients?: string;
+  ingredientsAr?: string;
+  ingredientsEn?: string;
   categoryId: string;
   visible: boolean;
   createdAt: number;
-  star?: boolean; // ✅ جديد
+  star?: boolean;
 }

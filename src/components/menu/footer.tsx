@@ -12,12 +12,14 @@ import {
 import { useState, useEffect } from "react";
 import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase";
+import { useTranslation } from "react-i18next";
 import FeedbackModal from "../menu/FeedbackModal";
 
 const LOCAL_STORAGE_KEY = "footerInfo";
 
 export default function Footer() {
 
+  const { i18n } = useTranslation();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [complaintsWhatsapp, setComplaintsWhatsapp] = useState("");
 
@@ -75,108 +77,58 @@ export default function Footer() {
   ];
 
   return (
-    <footer
-      className="
-        mt-20
-        bg-linear-to-t from-[#a70a05] via-[#a70a05]/95 to-[#a70a05]/90
-        text-[#F5F8F7]
-        rounded-t-3xl
-        border-t border-[#FDB143]/30
-        font-[Almarai]
-      "
-    >
-      <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-8">
-        {/* ===== Right | Address ===== */}
-        <div className="flex flex-col md:items-end items-center space-y-3 w-full md:w-auto">
+    <footer className="w-full bg-(--bg-card)/40 backdrop-blur-md border-t border-(--border-color) py-12 px-6 mt-20">
+      <div className="max-w-6xl mx-auto flex flex-col items-center gap-8">
+        {/* Contact info Row */}
+        <div className="flex flex-wrap justify-center gap-8 text-sm font-bold text-(--text-main)">
           {footer.address && (
-            <div className="flex items-center gap-2 text-lg font-[Cairo]">
-              <FaMapMarkerAlt className="text-xl shrink-0" />
-              <span className="text-right">{footer.address}</span>
+            <div className="flex items-center gap-2">
+              <FaMapMarkerAlt className="text-primary" />
+              <span>{footer.address}</span>
             </div>
           )}
-
-
-
           {footer.phone && (
-            <a
-              href={`tel:${footer.phone}`}
-              className="flex items-center gap-2"
-            >
-              <FaPhoneAlt /> {footer.phone}
+            <a href={`tel:${footer.phone}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+              <FaPhoneAlt className="text-primary" />
+              <span>{footer.phone}</span>
             </a>
           )}
         </div>
 
-        {/* ===== Center | Social + Feedback ===== */}
-        <div className="flex flex-col items-center gap-5 w-full md:w-auto">
-          <div className="flex gap-4">
-            {socialIcons.map(
-              ({ Icon, url }, i) =>
-                url && (
-                  <a
-                    key={i}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="
-                      w-10 h-10 rounded-full flex items-center justify-center
-                      bg-white text-[#a70a05]
-                      hover:scale-110
-                      hover:shadow-[0_0_25px_rgba(253,177,67,0.6)]
-                      transition-all duration-300
-                    "
-                  >
-                    <Icon className="text-[#a70a05] text-lg" />
-                  </a>
-                )
-            )}
-          </div>
-
-          {/* ===== Feedback Button ===== */}
-          {complaintsWhatsapp !== "" && (
-            <button
-              onClick={() => setShowFeedbackModal(true)}
-              className="
-                mt-4 w-full max-w-xs flex items-center justify-center gap-2
-                bg-white text-[#a70a05]
-                rounded-2xl
-                py-3 px-4
-                shadow-lg
-                hover:scale-105 hover:shadow-xl
-                transition-all duration-300
-              "
-            >
-              <FaCommentDots className="w-6 h-6 animate-pulse" />
-              <span className="text-sm font-bold">أرسل تقييمك</span>
-            </button>
-          )}
+        {/* Social Icons */}
+        <div className="flex gap-4">
+          {socialIcons.map(({ Icon, url }, i) => url && (
+            <a key={i} href={url} target="_blank" rel="noopener noreferrer"
+              className="w-10 h-10 rounded-xl flex items-center justify-center bg-(--bg-main) border border-(--border-color) text-(--text-main) hover:border-primary hover:text-primary transition-all duration-300 shadow-sm hover:shadow-md">
+              <Icon size={18} />
+            </a>
+          ))}
         </div>
 
-        {/* ===== Left | Signature ===== */}
-        <div className="flex flex-col md:items-start items-center w-full md:w-auto">
-          <a
-            href="https://engmohammedaljojo.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-white/10 transition"
+        {/* Feedback Button */}
+        {complaintsWhatsapp !== "" && (
+          <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
           >
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <FaLaptopCode className="text-white text-lg" />
-            </div>
+            <FaCommentDots />
+            <span>{i18n.language === 'ar' ? 'أرسل تقييمك' : 'Send Feedback'}</span>
+          </button>
+        )}
 
-            <div className="leading-tight text-center md:text-left">
-              <span className="block text-[10px] opacity-70">
-                تصميم وتطوير
-              </span>
-              <span className="block font-extrabold text-xs md:text-sm">
-                Eng. Mohammed Eljoujo
-              </span>
+        {/* Developer Signature */}
+        <div className="pt-8 border-t border-(--border-color) w-full flex flex-col items-center gap-4">
+          <a href="https://engmohammedaljojo.vercel.app/" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity">
+            <FaLaptopCode className="text-lg" />
+            <div className="text-[10px] font-black uppercase tracking-widest text-center">
+              Designed & Developed By Eng. Mohammed Eljoujo
             </div>
           </a>
+          <p className="text-[10px] text-(--text-muted) font-bold">© {new Date().getFullYear()} All Rights Reserved</p>
         </div>
       </div>
 
-      {/* ===== Feedback Modal ===== */}
       {complaintsWhatsapp !== "" && (
         <FeedbackModal
           show={showFeedbackModal}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { FaTimes, FaStar } from "react-icons/fa";
+import { FiX, FiStar, FiMessageSquare, FiSend } from "react-icons/fi";
 import { ref, onValue } from "firebase/database";
 import { db } from "../../firebase";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
     show: boolean;
@@ -18,9 +19,8 @@ export default function FeedbackModal({ show, onClose }: Props) {
     const [hoverRating, setHoverRating] = useState(0);
     const [toast, setToast] = useState<string | null>(null);
 
-    const [feedbackPhone, setFeedbackPhone] = useState(""); // رقم واتساب الشكاوى والآراء
+    const [feedbackPhone, setFeedbackPhone] = useState("");
 
-    // ===== جلب البيانات من localStorage أو Firebase =====
     useEffect(() => {
         const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (localData) {
@@ -33,13 +33,9 @@ export default function FeedbackModal({ show, onClose }: Props) {
             if (snapshot.exists()) {
                 const phone = snapshot.val();
                 setFeedbackPhone(phone);
-                localStorage.setItem(
-                    LOCAL_STORAGE_KEY,
-                    JSON.stringify({ feedbackPhone: phone })
-                );
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ feedbackPhone: phone }));
             }
         });
-
         return () => unsubscribe();
     }, []);
 
@@ -66,16 +62,8 @@ export default function FeedbackModal({ show, onClose }: Props) {
             return;
         }
 
-        const fullMessage = `⭐ تقييم زبون ⭐
-            ------------------
-            🔹 الاسم: ${name || "-"}
-            🔹 الجوال: ${phone || "-"}
-            🔹 التقييم: ${rating}/5
-            🔹 الملاحظة: ${message || "-"}`;
-
-
-        const url =
-            "https://wa.me/" + feedbackPhone + "?text=" + encodeURIComponent(fullMessage);
+        const fullMessage = `⭐ تقييم زبون ⭐\n------------------\n🔹 الاسم: ${name || "-"}\n🔹 الجوال: ${phone || "-"}\n🔹 التقييم: ${rating}/5\n🔹 الملاحظة: ${message || "-"}`;
+        const url = `https://wa.me/${feedbackPhone}?text=${encodeURIComponent(fullMessage)}`;
         window.open(url, "_blank");
 
         setToast("تم إرسال الملاحظة بنجاح ✅");
@@ -83,86 +71,109 @@ export default function FeedbackModal({ show, onClose }: Props) {
         onClose();
     };
 
-    if (!show) return null;
-
     return (
-        <>
-            {/* Overlay */}
-            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
-                <div className="bg-[#231F20] text-[#F7F3E8] rounded-3xl w-full max-w-md p-6 relative shadow-lg max-h-[90vh] overflow-y-auto">
-                    {/* Close Button */}
-                    <button onClick={onClose} className="absolute top-4 left-4 text-xl">
-                        <FaTimes />
-                    </button>
+        <AnimatePresence>
+            {show && (
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                    />
 
-                    <h2 className="text-2xl font-extrabold text-center mb-2 text-[#E7E7E7]">
-                        الآراء و الشكاوى
-                    </h2>
-                    <p className="text-sm text-[#F7F3E8]/60 text-center">
-                        نسعد بأرائكم ونعمل على إسعادكم ✨
-                    </p>
+                    {/* Modal */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="relative bg-(--bg-card)/80 backdrop-blur-2xl w-full max-w-md p-8 rounded-[2.5rem] border border-(--border-color) shadow-2xl overflow-y-auto max-h-[90vh] z-10"
+                    >
+                        <button onClick={onClose} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-2xl bg-(--bg-main) text-(--text-muted) hover:text-red-500 transition-all border border-(--border-color)">
+                            <FiX />
+                        </button>
 
-                    <div className="flex flex-col gap-4 mt-4">
-                        <input
-                            type="text"
-                            placeholder="الاسم (اختياري)"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#FDB143]"
-                        />
-                        <input
-                            type="tel"
-                            placeholder="رقم الجوال (اختياري)"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#FDB143] text-right placeholder:text-[#F7F3E8]/50"
-                        />
-
-                        {/* تقييم النجوم */}
-                        <div className="flex justify-center mt-2 mb-4">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <div
-                                    key={star}
-                                    className="relative cursor-pointer"
-                                    onMouseEnter={() => setHoverRating(star)}
-                                    onMouseLeave={() => setHoverRating(0)}
-                                    onClick={() => setRating(star)}
-                                >
-                                    <FaStar className="text-[#444] w-8 h-8" />
-                                    <FaStar
-                                        className={`absolute top-0 left-0 w-8 h-8 transition-transform duration-200 
-                                                 ${star <= (hoverRating || rating)
-                                                ? "text-yellow-400 scale-125 drop-shadow-lg"
-                                                : "text-transparent"
-                                            } hover:scale-120 hover:text-yellow-300`}
-                                    />
-                                </div>
-                            ))}
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-3xl mb-4 shadow-inner">
+                                <FiMessageSquare />
+                            </div>
+                            <h2 className="text-2xl font-black text-(--text-main) text-center">الآراء والشكاوى</h2>
+                            <p className="text-sm font-bold text-(--text-muted) text-center mt-1 uppercase tracking-widest opacity-60">Your feedback matters</p>
                         </div>
 
-                        <textarea
-                            placeholder="الملاحظة *"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            className="w-full px-4 py-2 rounded-xl bg-[#1F1B1C] text-[#F7F3E8] border border-[#FDB143] resize-none"
-                            rows={5}
-                        />
-                        <button
-                            onClick={handleSend}
-                            className="w-full py-3 rounded-full bg-[#FDB143] font-bold hover:scale-105 transition"
-                        >
-                            إرسال
-                        </button>
-                    </div>
-                </div>
-            </div>
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="الاسم (اختياري)"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full px-5 py-3.5 rounded-2xl bg-(--bg-main)/50 text-(--text-main) border border-(--border-color) focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold placeholder:opacity-50"
+                                />
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="tel"
+                                    placeholder="رقم الجوال (اختياري)"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    className="w-full px-5 py-3.5 rounded-2xl bg-(--bg-main)/50 text-(--text-main) border border-(--border-color) focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold text-right placeholder:opacity-50"
+                                />
+                            </div>
 
-            {/* Toast */}
-            {toast && (
-                <div className="fixed top-6 right-6 z-50 bg-[#FDB143] text-[#040309] px-6 py-3 rounded-2xl font-bold shadow-2xl animate-pulse">
-                    {toast}
+                            {/* Stars Rating */}
+                            <div className="flex justify-center gap-2 py-4">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onMouseEnter={() => setHoverRating(star)}
+                                        onMouseLeave={() => setHoverRating(0)}
+                                        onClick={() => setRating(star)}
+                                        className="relative p-1 transition-transform hover:scale-125 active:scale-95"
+                                    >
+                                        <FiStar
+                                            size={32}
+                                            className={`transition-colors duration-300 ${star <= (hoverRating || rating) ? 'text-amber-400 fill-amber-400 drop-shadow-lg' : 'text-(--text-muted) opacity-20'}`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+
+                            <textarea
+                                placeholder="اكتب ملاحظتك هنا... *"
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                className="w-full px-5 py-4 rounded-2xl bg-(--bg-main)/50 text-(--text-main) border border-(--border-color) focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold resize-none h-32 placeholder:opacity-50"
+                            />
+
+                            <button
+                                onClick={handleSend}
+                                className="w-full py-4 rounded-2xl bg-primary text-white font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                            >
+                                <FiSend />
+                                إرسال الملاحظة
+                            </button>
+                        </div>
+                    </motion.div>
+
+                    {/* Toast */}
+                    <AnimatePresence>
+                        {toast && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 30, x: "-50%" }}
+                                animate={{ opacity: 1, y: 0, x: "-50%" }}
+                                exit={{ opacity: 0, y: 30, x: "-50%" }}
+                                className="fixed top-10 left-1/2 z-110 bg-primary text-white px-8 py-4 rounded-2xl font-black shadow-2xl border border-white/20 backdrop-blur-md"
+                            >
+                                {toast}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             )}
-        </>
+        </AnimatePresence>
     );
 }
