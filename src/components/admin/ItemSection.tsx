@@ -273,6 +273,7 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                   onClick={() => toggleSection(catId)}
                   className="w-full text-right p-6 flex items-center justify-between group bg-(--bg-main)/30"
                 >
+
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
                       <FiChevronDown className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
@@ -299,89 +300,123 @@ const ItemSection: React.FC<Props> = ({ categories, items, setPopup }) => {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: idx * 0.05 }}
-                            className={`flex flex-col sm:flex-row items-center gap-6 py-4 transition-all ${!item.visible ? "opacity-40 grayscale" : ""}`}
+                            className={`flex flex-col sm:flex-row gap-3 sm:gap-6 py-3 sm:py-4 transition-all ${!item.visible ? "opacity-40 grayscale" : ""
+                              }`}
                           >
-                            {/* Image Part */}
-                            <div className="relative group/img">
-                              {item.image ? (
-                                <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-(--border-color) shadow-inner">
-                                  <img
-                                    src={`/images/${item.image}`}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500"
-                                    onError={(e) => { e.currentTarget.src = "/logo.png" }}
-                                  />
+                            {/* ===== Top Row (image + info) ===== */}
+                            <div className="flex gap-3 w-full items-center">
+
+                              {/* Image */}
+                              <div className="relative group/img shrink-0">
+                                {item.image ? (
+                                  <div className="relative w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden border border-(--border-color) shadow-inner">
+                                    <img
+                                      src={`/images/${item.image}`}
+                                      alt={item.name}
+                                      className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500"
+                                      onError={(e) => { e.currentTarget.src = "/logo.png" }}
+                                    />
+
+                                    <button
+                                      onClick={() => removeImage(item.id)}
+                                      className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg scale-0 group-hover/img:scale-100 transition-transform"
+                                    >
+                                      <FiMinus size={12} />
+                                    </button>
+                                  </div>
+                                ) : (
                                   <button
-                                    onClick={() => removeImage(item.id)}
-                                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transform scale-0 group-hover/img:scale-100 transition-transform"
+                                    onClick={() => openGallery(item.id)}
+                                    className="w-14 h-14 sm:w-20 sm:h-20 bg-(--bg-main) border-2 border-dashed border-(--border-color) rounded-xl sm:rounded-2xl flex items-center justify-center text-(--text-muted) hover:text-primary hover:border-primary/50 transition-all"
                                   >
-                                    <FiMinus size={14} />
+                                    <FiImage size={18} />
                                   </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => openGallery(item.id)}
-                                  className="w-20 h-20 bg-(--bg-main) border-2 border-dashed border-(--border-color) rounded-2xl flex flex-col items-center justify-center text-(--text-muted) hover:text-primary hover:border-primary/50 transition-all gap-1"
-                                >
-                                  <FiImage size={24} />
-                                  <span className="text-[10px] font-black uppercase tracking-tighter">{t('common.add')}</span>
-                                </button>
-                              )}
-                              <button
-                                onClick={() => openGallery(item.id, item.image)}
-                                className="absolute -bottom-2 -left-2 w-8 h-8 bg-white border border-(--border-color) rounded-xl flex items-center justify-center text-primary shadow-sm opacity-0 group-hover/img:opacity-100 transition-opacity"
-                              >
-                                <FiImage size={14} />
-                              </button>
-                            </div>
-
-                            {/* Info Part */}
-                            <div className="flex-1 min-w-0 flex flex-col gap-1">
-                              <div className="flex items-center gap-3">
-                                <h4 className="font-black text-lg text-(--text-main) truncate">{i18n.language === 'ar' ? item.nameAr : item.nameEn}</h4>
-                                {item.star && <FiStar className="text-yellow-400 fill-yellow-400" size={16} />}
+                                )}
                               </div>
-                              {(item.ingredientsAr || item.ingredientsEn) && <p className="text-xs text-(--text-muted) font-medium line-clamp-1">{i18n.language === 'ar' ? item.ingredientsAr : item.ingredientsEn}</p>}
-                              <p className="text-primary font-black text-sm">{item.price} <span className="text-[10px] uppercase opacity-70">₪</span></p>
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0 flex flex-col">
+
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-black text-sm sm:text-lg text-(--text-main) truncate">
+                                    {i18n.language === "ar" ? item.nameAr : item.nameEn}
+                                  </h4>
+
+                                  {item.star && (
+                                    <FiStar
+                                      className="text-yellow-400 fill-yellow-400 shrink-0"
+                                      size={14}
+                                    />
+                                  )}
+                                </div>
+
+                                {(item.ingredientsAr || item.ingredientsEn) && (
+                                  <p className="text-[11px] sm:text-xs text-(--text-muted) font-medium line-clamp-1">
+                                    {i18n.language === "ar"
+                                      ? item.ingredientsAr
+                                      : item.ingredientsEn}
+                                  </p>
+                                )}
+
+                                <p className="text-primary font-black text-xs sm:text-sm mt-0.5">
+                                  {item.price} <span className="text-[9px] opacity-70">₪</span>
+                                </p>
+
+                              </div>
                             </div>
 
-                            {/* Actions Part */}
-                            <div className="flex items-center gap-3 bg-(--bg-main) p-1.5 rounded-2xl border border-(--border-color)">
+                            {/* ===== Actions ===== */}
+                            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto bg-(--bg-main) p-1.5 rounded-xl sm:rounded-2xl border border-(--border-color)">
+
+                              {/* Animated Toggle */}
                               <button
                                 onClick={() => toggleItem(item.id, item.visible)}
-                                className={`relative w-12 h-6 rounded-full transition-all duration-300 border
-                                        ${item.visible ? "bg-green-500 border-green-500/20" : "bg-gray-300 border-gray-400"}`}
+                                className={`relative shrink-0 w-12 h-6 rounded-full flex items-center p-1 transition-all duration-300 border ${item.visible
+                                    ? "bg-green-500 border-green-500 shadow-[0_0_12px_rgba(34,197,94,0.3)]"
+                                    : "bg-(--bg-main) border-(--border-color)"
+                                  }`}
+                                style={{
+                                  justifyContent: item.visible ? "flex-end" : "flex-start"
+                                }}
                               >
-                                <motion.span
-                                  animate={{ x: item.visible ? 24 : 2 }}
-                                  className="absolute top-0.5 left-0 w-4.5 h-4.5 rounded-full bg-white shadow-md"
+                                <motion.div
+                                  layout
+                                  initial={false}
+                                  transition={{ type: "spring", stiffness: 600, damping: 30 }}
+                                  className={`w-4 h-4 rounded-full shadow-sm z-10 ${item.visible ? "bg-white" : "bg-(--text-muted)"
+                                    }`}
                                 />
                               </button>
 
-                              <div className="w-px h-6 bg-(--border-color)" />
-
                               <div className="flex items-center gap-1">
+
                                 <button
                                   onClick={async () => {
                                     const newStar = !item.star;
                                     await update(ref(db, `items/${item.id}`), { star: newStar });
                                   }}
-                                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${item.star ? "bg-yellow-100 text-yellow-600" : "hover:bg-yellow-50 text-(--text-muted)"}`}
+                                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${item.star
+                                    ? "bg-yellow-100 text-yellow-600"
+                                    : "hover:bg-yellow-50 text-(--text-muted)"
+                                    }`}
                                 >
-                                  <FiStar size={18} fill={item.star ? "currentColor" : "none"} />
+                                  <FiStar size={16} fill={item.star ? "currentColor" : "none"} />
                                 </button>
+
                                 <button
                                   onClick={() => setPopup({ type: "editItem", id: item.id })}
-                                  className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-primary/10 hover:text-primary text-(--text-muted) transition-all"
+                                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary text-(--text-muted)"
                                 >
-                                  <FiEdit size={18} />
+                                  <FiEdit size={16} />
                                 </button>
+
                                 <button
                                   onClick={() => setPopup({ type: "deleteItem", id: item.id })}
-                                  className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-red-50 hover:text-red-500 text-(--text-muted) transition-all"
+                                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-red-500 text-(--text-muted)"
                                 >
-                                  <FiTrash2 size={18} />
+                                  <FiTrash2 size={16} />
                                 </button>
+
                               </div>
                             </div>
                           </motion.div>

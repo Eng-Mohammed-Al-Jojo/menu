@@ -90,7 +90,7 @@ const Popup: React.FC<Props> = ({
           {/* Close Button */}
           <button
             onClick={closePopup}
-            className={`absolute top-6 ${isRtl ? 'left-6' : 'right-6'} w-10 h-10 flex items-center justify-center rounded-2xl bg-(--bg-main) text-(--text-muted) hover:text-primary transition-colors border border-(--border-color)`}
+            className={`absolute top-2 ${isRtl ? 'left-3' : 'right-3'} w-8 h-8 flex items-center justify-center rounded-xl bg-(--bg-main) text-(--text-muted) hover:text-primary transition-colors border border-(--border-color)`}
           >
             <FiX />
           </button>

@@ -239,27 +239,36 @@ const CategorySection: React.FC<Props> = ({
 
         {/* Add Section */}
         <div className="flex items-center gap-2 sm:gap-3 bg-(--bg-main) p-1.5 rounded-2xl border border-(--border-color) w-full md:w-auto shadow-inner">
+
           <input
-            className={`flex-1 md:w-48 bg-transparent ${isRtl ? 'pr-4 pl-2 text-right' : 'pl-4 pr-2 text-left'} py-2 text-xs sm:text-sm font-bold outline-none`}
-            placeholder={formLang === "ar" ? t('common.name') + " (AR)" : t('common.name') + " (EN)"}
+            className={`flex-1 min-w-0 bg-transparent ${isRtl ? "pr-3 text-right" : "pl-3 text-left"
+              } py-2 text-xs sm:text-sm font-bold outline-none`}
+            placeholder={
+              formLang === "ar"
+                ? t("common.name") + " (AR)"
+                : t("common.name") + " (EN)"
+            }
             value={formLang === "ar" ? newCategoryNameAr : newCategoryNameEn}
             onChange={(e) => {
               if (formLang === "ar") setNewCategoryNameAr(e.target.value);
               else setNewCategoryNameEn(e.target.value);
             }}
           />
+
           <button
-            onClick={() => setFormLang(p => p === "ar" ? "en" : "ar")}
-            className="px-2 py-1 text-[8px] font-black bg-white/50 rounded-lg border border-(--border-color) hover:bg-white transition-all uppercase shrink-0"
+            onClick={() => setFormLang((p) => (p === "ar" ? "en" : "ar"))}
+            className="px-2 py-1 text-[9px] font-black bg-white/50 rounded-lg border border-(--border-color) hover:bg-white transition-all uppercase shrink-0"
           >
             {formLang}
           </button>
+
           <button
             onClick={() => setPopup({ type: "addCategory" })}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0"
+            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0"
           >
-            <FiPlus size={20} />
+            <FiPlus size={18} />
           </button>
+
         </div>
       </div>
 

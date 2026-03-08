@@ -91,45 +91,79 @@ export default function ItemRow({ item, orderSystem, featuredMode }: Props) {
         )}
 
         {/* Pricing Area - Redesigned for Compactness */}
-        <div className="mt-auto pt-3 flex flex-col gap-2">
-          {prices.map((p, idx) => {
-            const price = Number(p.trim());
-            const isAdded = addedPrice === price;
+        {/* Pricing Area */}
+        <div className="mt-auto pt-3">
 
-            return (
-              <div
-                key={idx}
-                className={`flex items-center justify-between gap-2 p-1 rounded-xl border transition-all duration-300 group/price ${isAdded ? "bg-green-50/50 border-green-200" : "bg-(--bg-main)/50 border-(--border-color) hover:border-primary/40 hover:bg-(--bg-main)"
-                  }`}
-              >
-                <div className="pl-3 flex items-center gap-1">
-                  <span className={`text-base font-black ${isAdded ? "text-green-600" : "text-primary"}`}>
-                    {price}
-                  </span>
-                  <span className={`transition-opacity duration-300 ${isAdded ? "text-green-600 opacity-60" : "text-primary opacity-50"}`}>
-                    <TbCurrencyShekel size={16} className="text-(--text-muted)" />
-                  </span>
-                </div>
+          {/* ===== When order system OFF ===== */}
+          {!orderSystem && (
+            <div className="flex items-center gap-2 pl-1">
+              <span className="text-base font-black text-primary">
+                {prices.map((p) => Number(p.trim())).join(" - ")}
+              </span>
 
-                {orderSystem && !unavailable && (
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleAdd(price)}
-                    className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-500 shadow-sm ${isAdded
-                      ? "bg-green-500 text-white shadow-green-500/20"
-                      : "bg-(--bg-card) text-(--text-muted) hover:bg-primary hover:text-white hover:shadow-primary/20 border border-(--border-color)"
+              <TbCurrencyShekel
+                size={18}
+                className="text-(--text-muted) opacity-70"
+              />
+            </div>
+          )}
+
+          {/* ===== When order system ON ===== */}
+          {orderSystem && (
+            <div className="flex flex-col gap-2">
+              {prices.map((p, idx) => {
+                const price = Number(p.trim());
+                const isAdded = addedPrice === price;
+
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between gap-2 p-1 rounded-xl border transition-all duration-300 group/price ${isAdded
+                      ? "bg-green-50/50 border-green-200"
+                      : "bg-(--bg-main)/50 border-(--border-color) hover:border-primary/40 hover:bg-(--bg-main)"
                       }`}
                   >
-                    {isAdded ? (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><FiCheck strokeWidth={4} size={14} /></motion.div>
-                    ) : (
-                      <FiPlus size={14} />
+                    <div className="pl-3 flex items-center gap-1">
+                      <span
+                        className={`text-base font-black ${isAdded ? "text-green-600" : "text-primary"
+                          }`}
+                      >
+                        {price}
+                      </span>
+
+                      <TbCurrencyShekel
+                        size={16}
+                        className="text-(--text-muted)"
+                      />
+                    </div>
+
+                    {!unavailable && (
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleAdd(price)}
+                        className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-500 shadow-sm ${isAdded
+                          ? "bg-green-500 text-white shadow-green-500/20"
+                          : "bg-(--bg-card) text-(--text-muted) hover:bg-primary hover:text-white hover:shadow-primary/20 border border-(--border-color)"
+                          }`}
+                      >
+                        {isAdded ? (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                          >
+                            <FiCheck strokeWidth={4} size={14} />
+                          </motion.div>
+                        ) : (
+                          <FiPlus size={14} />
+                        )}
+                      </motion.button>
                     )}
-                  </motion.button>
-                )}
-              </div>
-            );
-          })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
         </div>
       </div>
 
