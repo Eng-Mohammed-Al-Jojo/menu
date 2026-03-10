@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 interface Props {
     show: boolean;
     onClose: () => void;
+    orderSystem?: boolean;
 }
 
 const LOCAL_STORAGE_KEY = "feedbackSettings";

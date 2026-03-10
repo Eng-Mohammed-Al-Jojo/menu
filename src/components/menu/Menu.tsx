@@ -61,14 +61,15 @@ const loadFromLocal = () => {
 interface Props {
   onLoadingChange?: (loading: boolean) => void;
   onFeaturedCheck?: (hasFeatured: boolean) => void;
+  orderSystem?: boolean; // لو بدك تمرره من بره MenuPage
 }
 
-export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
+export default function Menu({ onLoadingChange, onFeaturedCheck, orderSystem: initialOrderSystem }: Props) {
   const { t, i18n } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [orderSystem, setOrderSystem] = useState<boolean>(true);
+  const [orderSystem, setOrderSystem] = useState<boolean>(initialOrderSystem ?? true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -79,7 +80,11 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
       const res = await fetch("/menu.json");
       const data = await res.json();
       const cats: Category[] = Object.entries(data.categories || {}).map(([id, v]: any) => ({
-        id, name: v.name, available: v.available !== false, order: v.order ?? 0, createdAt: v.createdAt || 0,
+        id,
+        name: v.name,
+        available: v.available !== false,
+        order: v.order ?? 0,
+        createdAt: v.createdAt || 0,
       })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       const its: Item[] = Object.entries(data.items || {}).map(([id, v]: any) => ({ id, ...v, createdAt: v.createdAt || 0 }));
       setCategories(cats);
@@ -265,7 +270,6 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
 
-
             {/* Content Body */}
             {activeCategory === "all" && !searchTerm ? (
               availableCategories.map((cat) => {
@@ -276,7 +280,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
                     key={cat.id}
                     category={cat}
                     items={catItems}
-                    orderSystem={orderSystem}
+                    orderSystem={orderSystem} // ✅ إضافة
                   />
                 );
               })
@@ -292,7 +296,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
                           (categories.find(c => c.id === activeCategory)?.nameEn || categories.find(c => c.id === activeCategory)?.name || ""))
                     }}
                     items={filteredItems.filter(i => i.visible !== false)}
-                    orderSystem={orderSystem}
+                    orderSystem={orderSystem} // ✅ إضافة
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-32 text-(--text-muted) bg-(--bg-card)/30 rounded-[3rem] border border-dashed border-(--border-color)">
@@ -322,9 +326,11 @@ export default function Menu({ onLoadingChange, onFeaturedCheck }: Props) {
         </AnimatePresence>
       </main>
 
+      {/* Feedback Modal */}
       <FeedbackModal
         show={showFeedbackModal}
         onClose={() => setShowFeedbackModal(false)}
+        orderSystem={orderSystem} // ✅ إضافة
       />
     </div>
   );

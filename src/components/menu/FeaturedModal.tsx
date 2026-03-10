@@ -10,10 +10,10 @@ import { type Item } from "./Menu";
 interface Props {
     show: boolean;
     onClose: () => void;
-    orderSystem: boolean;
+    orderSystem?: boolean;
 }
 
-export default function FeaturedModal({ show, onClose, orderSystem }: Props) {
+export default function FeaturedModal({ show, onClose, orderSystem = true }: Props) {
 
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
