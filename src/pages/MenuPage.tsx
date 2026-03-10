@@ -7,6 +7,7 @@ import Menu from "../components/menu/Menu";
 import { FaFire, FaMoon, FaSun, FaLanguage } from "react-icons/fa";
 import FeaturedModal from "../components/menu/FeaturedModal";
 import { motion, AnimatePresence } from "framer-motion";
+import { getDatabase, ref, onValue } from "firebase/database";
 
 export default function MenuPage() {
   const { t, i18n } = useTranslation();
@@ -14,6 +15,7 @@ export default function MenuPage() {
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hasFeatured, setHasFeatured] = useState(false);
+  const [orderSystem, setOrderSystem] = useState(true);
 
   const isRtl = i18n.language === 'ar';
 
@@ -26,6 +28,16 @@ export default function MenuPage() {
     const newLang = i18n.language === 'ar' ? 'en' : 'ar';
     i18n.changeLanguage(newLang);
   };
+
+  useEffect(() => {
+    const db = getDatabase();
+    const settingsRef = ref(db, "settings/orderSystem");
+    const unsubscribe = onValue(settingsRef, (snapshot) => {
+      const value = snapshot.val();
+      setOrderSystem(value ?? true);
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div
@@ -128,10 +140,10 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Featured Modal */}
       <FeaturedModal
         show={showFeaturedModal}
         onClose={() => setShowFeaturedModal(false)}
+        orderSystem={orderSystem}
       />
       <Footer />
     </div>

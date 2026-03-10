@@ -10,10 +10,11 @@ import { type Item } from "./Menu";
 interface Props {
     show: boolean;
     onClose: () => void;
-    orderSystem?: boolean;
+    orderSystem: boolean;
 }
 
-export default function FeaturedModal({ show, onClose, orderSystem = true }: Props) {
+
+export default function FeaturedModal({ show, onClose, orderSystem }: Props) {
 
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
@@ -53,6 +54,7 @@ export default function FeaturedModal({ show, onClose, orderSystem = true }: Pro
             } finally {
 
                 setLoading(false);
+                console.log("orderSystem", orderSystem);
 
             }
 
@@ -140,8 +142,8 @@ export default function FeaturedModal({ show, onClose, orderSystem = true }: Pro
 
                                             <ItemRow
                                                 item={item}
-                                                orderSystem={orderSystem}
                                                 featuredMode={true}
+                                                orderSystem={orderSystem} // خليه دائمًا يأخذ القيمة من المودال مباشرة
                                             />
 
                                         </motion.div>
