@@ -73,7 +73,8 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, orderSystem: in
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-
+  const MIN_LOADING_TIME = 3000;
+  const [startTime] = useState(Date.now());
   /* ================= Backup Logic ================= */
   const loadMenuJson = async () => {
     try {
@@ -90,8 +91,13 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, orderSystem: in
       setCategories(cats);
       setItems(its);
       setOrderSystem(data.orderSystem ?? true);
-      setLoading(false);
-      onLoadingChange?.(false);
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+      setTimeout(() => {
+        setLoading(false);
+        onLoadingChange?.(false);
+      }, remaining);
     } catch {
       setLoading(false);
       onLoadingChange?.(false);
@@ -106,8 +112,15 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, orderSystem: in
     const finishFirebase = (cats: Category[], its: Item[], os: boolean) => {
       firebaseLoaded = true;
       saveToLocal(cats, its, os);
-      setLoading(false);
-      onLoadingChange?.(false);
+
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+      setTimeout(() => {
+        setLoading(false);
+        onLoadingChange?.(false);
+      }, remaining);
+
       if (timeoutId) clearTimeout(timeoutId);
     };
     const loadOnline = () => {

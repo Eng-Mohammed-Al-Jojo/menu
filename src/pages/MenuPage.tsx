@@ -40,6 +40,9 @@ export default function MenuPage() {
   }, []);
 
   return (
+
+
+
     <div
       className={`min-h-screen flex flex-col bg-(--bg-main) text-(--text-main) font-['Cairo'] relative transition-colors duration-300`}
     >
