@@ -132,6 +132,9 @@ export default function CartModal({ onClose }: { onClose: () => void }) {
         };
 
         await set(orderRef, orderData);
+        if (orderRef.key) {
+            localStorage.setItem("lastOrderId", orderRef.key);
+        }
     };
 
     const renderMessage = (msg: string) =>

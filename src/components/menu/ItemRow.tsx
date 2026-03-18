@@ -18,8 +18,13 @@ export default function ItemRow({ item, orderSystem, featuredMode }: Props) {
   const unavailable = item.visible === false;
   const isRtl = i18n.language === 'ar';
 
-  const itemName = isRtl ? (item as any).nameAr || item.name : (item as any).nameEn || item.name;
-  const itemIngredients = isRtl ? (item as any).ingredientsAr || item.ingredients : (item as any).ingredientsEn || item.ingredients;
+  const itemName = isRtl 
+    ? (item.nameAr || item.nameEn || item.name) 
+    : (item.nameEn || item.nameAr || item.name);
+    
+  const itemIngredients = isRtl 
+    ? (item.ingredientsAr || item.ingredientsEn || item.ingredients) 
+    : (item.ingredientsEn || item.ingredientsAr || item.ingredients);
 
   const { addItem } = useCart();
   const [addedPrice, setAddedPrice] = useState<number | null>(null);

@@ -72,6 +72,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, orderSystem: in
   const [orderSystem, setOrderSystem] = useState<boolean>(initialOrderSystem ?? true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const isRtl = i18n.language === 'ar';
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const MIN_LOADING_TIME = 3000;
   const [startTime] = useState(Date.now());
@@ -260,7 +261,7 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, orderSystem: in
                   }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${activeCategory === cat.id ? 'bg-white' : 'bg-primary'}`} />
-                {i18n.language === 'ar' ? (cat.nameAr || cat.name) : (cat.nameEn || cat.name)}
+                {isRtl ? (cat.nameAr || cat.nameEn || cat.name) : (cat.nameEn || cat.nameAr || cat.name)}
               </button>
             ))}
           </div>
@@ -304,9 +305,9 @@ export default function Menu({ onLoadingChange, onFeaturedCheck, orderSystem: in
                     category={{
                       id: "search",
                       name: searchTerm ? t('common.items') :
-                        (i18n.language === 'ar' ?
-                          (categories.find(c => c.id === activeCategory)?.nameAr || categories.find(c => c.id === activeCategory)?.name || "") :
-                          (categories.find(c => c.id === activeCategory)?.nameEn || categories.find(c => c.id === activeCategory)?.name || ""))
+                        (isRtl ?
+                          (categories.find(c => c.id === activeCategory)?.nameAr || categories.find(c => c.id === activeCategory)?.nameEn || categories.find(c => c.id === activeCategory)?.name || "") :
+                          (categories.find(c => c.id === activeCategory)?.nameEn || categories.find(c => c.id === activeCategory)?.nameAr || categories.find(c => c.id === activeCategory)?.name || ""))
                     }}
                     items={filteredItems.filter(i => i.visible !== false)}
                     orderSystem={orderSystem} // ✅ إضافة

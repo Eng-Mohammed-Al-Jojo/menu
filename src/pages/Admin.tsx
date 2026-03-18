@@ -69,6 +69,7 @@ export default function Admin() {
     footerInfo: { address: "", phone: "", whatsapp: "", facebook: "", instagram: "", tiktok: "" },
   });
   const [orders, setOrders] = useState<any>({});
+  const [prevOrdersCount, setPrevOrdersCount] = useState<number | null>(null);
 
   // ================= NOTIFICATIONS =================
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -100,7 +101,22 @@ export default function Admin() {
 
     onValue(catRef, (snap) => setCategories(snap.val() || {}));
     onValue(itemRef, (snap) => setItems(snap.val() || {}));
-    onValue(ordersRef, (snap) => setOrders(snap.val() || {}));
+    onValue(ordersRef, (snap) => {
+      const newOrders = snap.val() || {};
+      const newCount = Object.keys(newOrders).length;
+
+      // Play sound if count increases (new order)
+      if (prevOrdersCount !== null && newCount > prevOrdersCount) {
+        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+        audio.play().catch(() => {
+          // Browser might block audio without user interaction
+          console.log("Audio play blocked or failed");
+        });
+      }
+
+      setOrders(newOrders);
+      setPrevOrdersCount(newCount);
+    });
 
     const initSettings = async () => {
       const snap = await get(settingsRef);

@@ -11,7 +11,9 @@ interface Props {
 
 export default function CategorySection({ category, items, orderSystem }: Props) {
   const { i18n } = useTranslation();
-  const catName = i18n.language === 'ar' ? (category.nameAr || category.name) : (category.nameEn || category.name);
+  const catName = i18n.language === 'ar' 
+    ? (category.nameAr || category.nameEn || category.name) 
+    : (category.nameEn || category.nameAr || category.name);
 
   return (
     <section className="w-full py-10 overflow-hidden">
@@ -29,9 +31,9 @@ export default function CategorySection({ category, items, orderSystem }: Props)
         </div>
 
         <div className="flex flex-col">
-          <h2 className="text-3xl md:text-4xl font-black text-(--text-main) tracking-tighter">
+          <h1 className="text-3xl md:text-4xl font-black text-(--text-main) tracking-tighter">
             {catName}
-          </h2>
+          </h1>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
               {i18n.language === 'ar' ?

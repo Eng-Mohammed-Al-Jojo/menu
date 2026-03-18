@@ -35,8 +35,10 @@ const OrderSection: React.FC<Props> = ({ orders }) => {
     const getStatusStyles = (status: string) => {
         switch (status) {
             case "pending": return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-            case "preparing": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-            case "done": return "bg-green-500/10 text-green-500 border-green-500/20";
+            case "preparing": return "bg-blue-500/10 text-blue-500 border-blue-500/20 text-(--text-main)";
+            case "ready": return "bg-green-500/10 text-green-500 border-green-500/20";
+            case "done":
+            case "delivered": return "bg-gray-500/10 text-gray-400 border-gray-500/20";
             case "cancelled": return "bg-red-500/10 text-red-500 border-red-500/20";
             default: return "bg-gray-500/10 text-gray-500 border-gray-500/20";
         }
@@ -46,7 +48,9 @@ const OrderSection: React.FC<Props> = ({ orders }) => {
         switch (status) {
             case "pending": return t('admin.pending');
             case "preparing": return t('admin.preparing');
-            case "done": return t('admin.done');
+            case "ready": return t('admin.ready');
+            case "done":
+            case "delivered": return t('admin.delivered');
             case "cancelled": return t('admin.cancelled');
             default: return status;
         }
@@ -184,7 +188,9 @@ const OrderSection: React.FC<Props> = ({ orders }) => {
                                                             </h4>
                                                             <div className="bg-(--bg-card) p-4 rounded-2xl border border-(--border-color) divide-y divide-(--border-color)">
                                                                 {order.items.map((item: any, i: number) => {
-                                                                    const itemName = isRtl ? item.nameAr || item.name : item.nameEn || item.name;
+                                                                    const itemName = isRtl 
+                                                                        ? (item.nameAr || item.nameEn || item.name) 
+                                                                        : (item.nameEn || item.nameAr || item.name);
                                                                     return (
                                                                         <div key={i} className="flex justify-between py-2.5 text-sm">
                                                                             <span className="font-bold text-(--text-main)">
@@ -202,7 +208,7 @@ const OrderSection: React.FC<Props> = ({ orders }) => {
                                                         <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
                                                             <button
                                                                 onClick={() => updateStatus(order.id, "pending")}
-                                                                className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all whitespace-nowrap ${order.status === 'pending' ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/20' : 'bg-(--bg-main) text-(--text-muted) border border-(--border-color) hover:bg-yellow-50'}`}
+                                                                className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all whitespace-nowrap ${order.status === 'pending' || !order.status ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/20' : 'bg-(--bg-main) text-(--text-muted) border border-(--border-color) hover:bg-yellow-50'}`}
                                                             >
                                                                 ⏳ {t('admin.pending')}
                                                             </button>
@@ -213,10 +219,16 @@ const OrderSection: React.FC<Props> = ({ orders }) => {
                                                                 👨‍🍳 {t('admin.preparing')}
                                                             </button>
                                                             <button
-                                                                onClick={() => updateStatus(order.id, "done")}
-                                                                className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all whitespace-nowrap ${order.status === 'done' ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-(--bg-main) text-(--text-muted) border border-(--border-color) hover:bg-green-50'}`}
+                                                                onClick={() => updateStatus(order.id, "ready")}
+                                                                className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all whitespace-nowrap ${order.status === 'ready' ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-(--bg-main) text-(--text-muted) border border-(--border-color) hover:bg-green-50'}`}
                                                             >
-                                                                ✅ {t('admin.done')}
+                                                                🔔 {t('admin.ready')}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => updateStatus(order.id, "delivered")}
+                                                                className={`px-4 py-2.5 rounded-xl text-[10px] sm:text-xs font-black transition-all whitespace-nowrap ${order.status === 'delivered' || order.status === 'done' ? 'bg-gray-700 text-white shadow-lg shadow-gray-700/20' : 'bg-(--bg-main) text-(--text-muted) border border-(--border-color) hover:bg-gray-50'}`}
+                                                            >
+                                                                ✅ {t('admin.delivered')}
                                                             </button>
                                                         </div>
 

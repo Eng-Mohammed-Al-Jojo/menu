@@ -9,7 +9,9 @@ export default function CartItemRow({ item }: { item: CartItem }) {
     const { i18n } = useTranslation();
     const isRtl = i18n.language === 'ar';
 
-    const itemName = isRtl ? (item as any).nameAr || item.name : (item as any).nameEn || item.name;
+    const itemName = isRtl 
+        ? (item.nameAr || item.nameEn || item.name) 
+        : (item.nameEn || item.nameAr || item.name);
 
     return (
         <motion.div
